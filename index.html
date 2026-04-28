@@ -29,27 +29,21 @@
   }
 }
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px;min-height:100vh;overflow-x:hidden}
-/* 로딩 */
 #loading{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:12px}
 #loading .logo{font-size:36px}
 #loading p{font-size:14px;color:var(--text2)}
-/* 네비게이션 */
 #nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:0.5px solid var(--border);display:flex;z-index:100;height:calc(56px + max(env(safe-area-inset-bottom), 20px))}
 .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 4px calc(max(env(safe-area-inset-bottom), 20px) / 2);gap:3px;border:none;background:none;color:var(--text3);font-size:12px;cursor:pointer;transition:color .15s}
 .nav-btn.on{color:var(--blue)}
 .nav-btn svg{width:22px;height:22px}
-/* 페이지 */
-#app{padding-bottom:calc(72px + max(env(safe-area-inset-bottom), 12px))}
+#app{padding-bottom:calc(72px + max(env(safe-area-inset-bottom), 20px))}
 .page{display:none;padding:0 0 16px}
 .page.on{display:block}
-/* 헤더 */
 .page-header{padding:16px 16px 0;display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
 .page-title{font-size:20px;font-weight:600}
 .header-btn{padding:6px 12px;border-radius:20px;border:1px solid var(--border2);background:var(--bg2);font-size:13px;color:var(--text);cursor:pointer}
-/* 카드 */
 .card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:16px;margin:12px 16px 0;box-shadow:var(--shadow)}
 .card-title{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
-/* 요약 히어로 */
 .hero{background:var(--bg2);border-radius:var(--radius);margin:12px 16px 0;padding:20px}
 .hero-label{font-size:12px;color:var(--text2);margin-bottom:4px}
 .hero-amount{font-size:32px;font-weight:700;letter-spacing:-1px}
@@ -57,7 +51,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .hero-item{background:var(--bg);border-radius:var(--radius-sm);padding:10px;text-align:center}
 .hero-item-label{font-size:11px;color:var(--text2);margin-bottom:3px}
 .hero-item-val{font-size:15px;font-weight:600}
-/* 폼 */
 .form-group{display:flex;flex-direction:column;gap:8px}
 .form-row{display:grid;gap:8px}
 .form-row.col2{grid-template-columns:1fr 1fr}
@@ -67,7 +60,6 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
 .submit-btn{width:100%;padding:13px;border-radius:var(--radius);border:none;background:var(--blue);color:#fff;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px}
 .submit-btn:active{opacity:.85}
 .text-btn{background:none;border:1px solid var(--border2);color:var(--text);padding:8px 16px;border-radius:20px;font-size:13px;cursor:pointer}
-/* 리스트 */
 .list-item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:0.5px solid var(--border)}
 .list-item:last-child{border-bottom:none}
 .item-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
@@ -78,23 +70,19 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
 .item-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .item-amt{font-size:15px;font-weight:600}
 .del-btn{background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:0 4px;line-height:1}
-/* 뱃지 */
 .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
 .badge-blue{background:var(--blue-bg);color:var(--blue)}
 .badge-green{background:var(--green-bg);color:var(--teal)}
 .badge-amber{background:var(--amber-bg);color:var(--amber)}
 .badge-red{background:var(--red-bg);color:var(--red)}
-/* 프로그레스 바 */
 .prog-bg{height:7px;background:var(--bg3);border-radius:4px;overflow:hidden;margin:8px 0 4px}
 .prog-fill{height:100%;border-radius:4px;transition:width .4s}
-/* 카드 실적 */
 .perf-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:16px;margin:8px 16px 0}
 .perf-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
 .perf-name{font-size:15px;font-weight:600}
 .perf-owner{font-size:12px;color:var(--text2);margin-top:2px}
 .perf-pct{font-size:22px;font-weight:700}
 .perf-detail{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-top:4px}
-/* 예적금 */
 .sav-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:16px;margin:8px 16px 0}
 .sav-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
 .sav-name{font-size:15px;font-weight:600;margin-bottom:3px}
@@ -102,7 +90,6 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
 .sav-item label{font-size:11px;color:var(--text2);display:block;margin-bottom:2px}
 .sav-item span{font-size:14px;font-weight:500}
 .sav-footer{display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:0.5px solid var(--border)}
-/* 월별요약 */
 .summary-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 16px 0}
 .stat-card{background:var(--bg2);border-radius:var(--radius-sm);padding:14px}
 .stat-label{font-size:11px;color:var(--text2);margin-bottom:4px}
@@ -114,31 +101,22 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
 .avg-bar-avg{position:absolute;top:0;left:0;height:100%;border-radius:3px;opacity:.35}
 .avg-bar-cur{position:absolute;top:0;left:0;height:100%;border-radius:3px}
 .avg-diff{font-size:12px;font-weight:600;min-width:70px;text-align:right}
-/* 설정 */
-.setting-row{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:0.5px solid var(--border)}
-.setting-row:last-child{border-bottom:none}
-.setting-label{font-size:14px}
-.setting-sub{font-size:12px;color:var(--text2);margin-top:1px}
-.setting-val{font-size:14px;font-weight:500;color:var(--blue)}
-/* 탭 내 세그먼트 */
 .segment{display:flex;background:var(--bg2);border-radius:var(--radius-sm);padding:3px;margin:12px 16px 0;gap:2px}
 .seg-btn{flex:1;padding:7px;border-radius:6px;border:none;background:none;font-size:13px;color:var(--text2);cursor:pointer;font-weight:500}
 .seg-btn.on{background:var(--bg);color:var(--text);box-shadow:var(--shadow)}
-/* 모달 */
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:none;align-items:flex-end}
 .modal-backdrop.open{display:flex}
 .modal{background:var(--bg);border-radius:20px 20px 0 0;width:100%;padding:20px 16px calc(16px + env(safe-area-inset-bottom));max-height:90vh;overflow-y:auto}
 .modal-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 16px}
 .modal-title{font-size:17px;font-weight:600;margin-bottom:16px}
-/* 셀렉트 화살표 */
 .select-wrap{position:relative}
 .select-wrap::after{content:'▾';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text2);pointer-events:none;font-size:12px}
 .empty-state{text-align:center;padding:32px 16px;color:var(--text3);font-size:14px}
-.green-text{color:var(--green)}
-.red-text{color:var(--red)}
-.blue-text{color:var(--blue)}
-.teal-text{color:var(--teal)}
+.green-text{color:var(--green)}.red-text{color:var(--red)}.blue-text{color:var(--blue)}.teal-text{color:var(--teal)}
 .section-label{font-size:12px;font-weight:500;color:var(--text2);padding:16px 16px 8px;text-transform:uppercase;letter-spacing:.5px}
+/* 카드 추가 폼 */
+.card-add-form{background:var(--bg2);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+.card-add-title{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -150,7 +128,6 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
 
 <div id="app" style="display:none">
 
-<!-- 네비게이션 -->
 <nav id="nav">
   <button class="nav-btn on" onclick="showPage('book')" id="nav-book">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>
@@ -184,18 +161,9 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
     <div class="hero-label">이번 달 남은 금액</div>
     <div class="hero-amount" id="book-remain">—</div>
     <div class="hero-sub">
-      <div class="hero-item">
-        <div class="hero-item-label">총 수입</div>
-        <div class="hero-item-val blue-text" id="book-income">—</div>
-      </div>
-      <div class="hero-item">
-        <div class="hero-item-label">저축</div>
-        <div class="hero-item-val teal-text" id="book-saving">—</div>
-      </div>
-      <div class="hero-item">
-        <div class="hero-item-label">실소비</div>
-        <div class="hero-item-val red-text" id="book-spent">0</div>
-      </div>
+      <div class="hero-item"><div class="hero-item-label">총 수입</div><div class="hero-item-val blue-text" id="book-income">—</div></div>
+      <div class="hero-item"><div class="hero-item-label">저축</div><div class="hero-item-val teal-text" id="book-saving">—</div></div>
+      <div class="hero-item"><div class="hero-item-label">실소비</div><div class="hero-item-val red-text" id="book-spent">0</div></div>
     </div>
   </div>
   <div class="segment">
@@ -213,14 +181,8 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
     <button class="header-btn" onclick="openModal('modal-income')">+ 추가</button>
   </div>
   <div class="summary-stats">
-    <div class="stat-card">
-      <div class="stat-label">이번 달 총 수입</div>
-      <div class="stat-val blue-text" id="income-total">0원</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">급여 외 수입</div>
-      <div class="stat-val green-text" id="income-extra">0원</div>
-    </div>
+    <div class="stat-card"><div class="stat-label">이번 달 총 수입</div><div class="stat-val blue-text" id="income-total">0원</div></div>
+    <div class="stat-card"><div class="stat-label">급여 외 수입</div><div class="stat-val green-text" id="income-extra">0원</div></div>
   </div>
   <div class="section-label">이설</div>
   <div class="card" style="padding:0 16px"><div id="income-list-이설"></div></div>
@@ -228,11 +190,11 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
   <div class="card" style="padding:0 16px"><div id="income-list-상훈"></div></div>
 </div>
 
-<!-- 카드 실적 -->
+<!-- 카드 -->
 <div class="page" id="page-card">
   <div class="page-header">
     <span class="page-title">카드 실적</span>
-    <button class="header-btn" onclick="openModal('modal-card')">카드 설정</button>
+    <button class="header-btn" onclick="openModal('modal-card-add')">+ 카드 추가</button>
   </div>
   <div class="segment">
     <button class="seg-btn on" onclick="filterCard('all',this)">전체</button>
@@ -249,14 +211,8 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
     <button class="header-btn" onclick="openModal('modal-saving')">+ 추가</button>
   </div>
   <div class="summary-stats">
-    <div class="stat-card">
-      <div class="stat-label">월 납입 총액</div>
-      <div class="stat-val teal-text" id="sav-monthly">0원</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">만기 수령 예상</div>
-      <div class="stat-val green-text" id="sav-expect">0원</div>
-    </div>
+    <div class="stat-card"><div class="stat-label">월 납입 총액</div><div class="stat-val teal-text" id="sav-monthly">0원</div></div>
+    <div class="stat-card"><div class="stat-label">만기 수령 예상</div><div class="stat-val green-text" id="sav-expect">0원</div></div>
   </div>
   <div id="sav-list"></div>
 </div>
@@ -275,24 +231,14 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
       <div class="stat-val red-text" id="sum-spent">0원</div>
       <div id="sum-avg-badge" style="margin-top:4px"></div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">남은 금액</div>
-      <div class="stat-val green-text" id="sum-remain">—</div>
-    </div>
+    <div class="stat-card"><div class="stat-label">남은 금액</div><div class="stat-val green-text" id="sum-remain">—</div></div>
   </div>
-  <div class="card">
-    <div class="card-title">카테고리별 지출</div>
-    <div id="sum-cat-list"></div>
-  </div>
-  <div class="card">
-    <div class="card-title">평균 대비 이번 달</div>
-    <div id="sum-avg-compare"><div class="empty-state">2개월 이상 데이터가 쌓이면 표시돼요</div></div>
-  </div>
+  <div class="card"><div class="card-title">카테고리별 지출</div><div id="sum-cat-list"></div></div>
+  <div class="card"><div class="card-title">평균 대비 이번 달</div><div id="sum-avg-compare"><div class="empty-state">2개월 이상 데이터가 쌓이면 표시돼요</div></div></div>
+</div>
 </div>
 
-</div><!-- /app -->
-
-<!-- 지출 모달 -->
+<!-- 지출 추가 모달 -->
 <div class="modal-backdrop" id="modal-exp" onclick="closeModalOutside(event,'modal-exp')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -312,18 +258,12 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
             <option>용돈</option><option>보험</option><option>기타</option>
           </select>
         </div>
-        <div class="select-wrap">
-          <select id="exp-card">
-            <option value="현금">현금</option>
-            <option>이설_삼성카드</option><option>이설_하나카드</option>
-            <option>상훈_삼성카드</option><option>상훈_롯데카드</option><option>상훈_현대카드</option>
-          </select>
-        </div>
+        <div class="select-wrap"><select id="exp-card"></select></div>
       </div>
       <div class="select-wrap">
         <select id="exp-person">
           <option value="이설">이설</option>
-          <option value="남편">남편</option>
+          <option value="상훈">상훈</option>
           <option value="공동">공동</option>
         </select>
       </div>
@@ -354,13 +294,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
             <option>용돈</option><option>보험</option><option>기타</option>
           </select>
         </div>
-        <div class="select-wrap">
-          <select id="edit-exp-card">
-            <option value="현금">현금</option>
-            <option>이설_삼성카드</option><option>이설_하나카드</option>
-            <option>상훈_삼성카드</option><option>상훈_롯데카드</option><option>상훈_현대카드</option>
-          </select>
-        </div>
+        <div class="select-wrap"><select id="edit-exp-card"></select></div>
       </div>
       <div class="select-wrap">
         <select id="edit-exp-person">
@@ -405,13 +339,48 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
   </div>
 </div>
 
-<!-- 카드 설정 모달 -->
-<div class="modal-backdrop" id="modal-card" onclick="closeModalOutside(event,'modal-card')">
+<!-- 카드 추가 모달 -->
+<div class="modal-backdrop" id="modal-card-add" onclick="closeModalOutside(event,'modal-card-add')">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title">카드 목표 실적 설정</div>
-    <div id="card-setting-list"></div>
-    <button class="submit-btn" onclick="saveCardTargets();closeModal('modal-card')">저장</button>
+    <div class="modal-title">카드 추가</div>
+    <div class="form-group">
+      <input type="text" id="new-card-name" placeholder="카드 이름 (예: 신한카드)">
+      <div class="form-row col2">
+        <div class="select-wrap">
+          <select id="new-card-owner">
+            <option value="이설">이설</option>
+            <option value="상훈">상훈</option>
+          </select>
+        </div>
+        <div class="select-wrap">
+          <select id="new-card-payday">
+            <option value="">결제일</option>
+            ${Array.from({length:31},(_,i)=>`<option value="${i+1}일">${i+1}일</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <input type="number" id="new-card-target" placeholder="목표 실적 (원)" inputmode="numeric">
+      <button class="submit-btn" onclick="addCard()">추가하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 카드 실적 수정 모달 -->
+<div class="modal-backdrop" id="modal-card-edit" onclick="closeModalOutside(event,'modal-card-edit')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">실적 수정</div>
+    <input type="hidden" id="edit-card-id">
+    <div class="form-group">
+      <input type="number" id="edit-card-target" placeholder="목표 실적 (원)" inputmode="numeric">
+      <div class="select-wrap">
+        <select id="edit-card-payday">
+          ${Array.from({length:31},(_,i)=>`<option value="${i+1}일">${i+1}일</option>`).join('')}
+        </select>
+      </div>
+      <button class="submit-btn" onclick="updateCard()">수정 완료</button>
+    </div>
   </div>
 </div>
 
@@ -423,21 +392,17 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
     <div class="form-group">
       <div class="form-row col2">
         <input type="text" id="sav-name" placeholder="상품명">
-        <div class="select-wrap">
-          <select id="sav-type"><option>적금</option><option>예금</option></select>
-        </div>
+        <div class="select-wrap"><select id="sav-type"><option>적금</option><option>예금</option></select></div>
       </div>
       <div class="form-row col2">
         <input type="number" id="sav-amt" placeholder="납입금액" inputmode="numeric">
         <input type="number" id="sav-rate" placeholder="이율 (%)" step="0.01" inputmode="decimal">
       </div>
       <div class="form-row col2">
-        <input type="date" id="sav-start" placeholder="시작일">
-        <input type="date" id="sav-maturity" placeholder="만기일">
+        <input type="date" id="sav-start">
+        <input type="date" id="sav-maturity">
       </div>
-      <div class="select-wrap">
-        <select id="sav-owner"><option>이설</option><option>상훈</option><option>공동</option></select>
-      </div>
+      <div class="select-wrap"><select id="sav-owner"><option>이설</option><option>상훈</option><option>공동</option></select></div>
       <input type="text" id="sav-memo" placeholder="메모 (선택)">
       <button class="submit-btn" onclick="addSaving()">추가하기</button>
     </div>
@@ -448,7 +413,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
 import {
   getFirestore, collection, addDoc, deleteDoc, doc,
-  onSnapshot, setDoc, getDoc, query, orderBy
+  onSnapshot, setDoc, getDoc, query, orderBy, updateDoc
 } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -463,7 +428,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ── 데이터 ──
 let expenses = [], incomes = [], savings = [], cards = [];
 let expFilter = 'all', cardFilter = 'all';
 
@@ -475,15 +439,14 @@ const fmt = n => Math.round(n).toLocaleString('ko-KR') + '원';
 const today = () => new Date().toISOString().split('T')[0];
 const nowYM = () => new Date().toISOString().slice(0,7);
 
-// ── 초기화 ──
 document.getElementById('exp-date').value = today();
 document.getElementById('inc-date').value = today();
 document.getElementById('sav-start').value = today();
 
-// ── 페이지 전환 ──
+// ── 페이지 ──
 window.showPage = (id) => {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('on'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
   document.getElementById('page-'+id).classList.add('on');
   document.getElementById('nav-'+id).classList.add('on');
   if(id==='summary') renderSummary();
@@ -494,7 +457,15 @@ window.showPage = (id) => {
 // ── 모달 ──
 window.openModal = (id) => document.getElementById(id).classList.add('open');
 window.closeModal = (id) => document.getElementById(id).classList.remove('open');
-window.closeModalOutside = (e, id) => { if(e.target===document.getElementById(id)) closeModal(id); };
+window.closeModalOutside = (e,id) => { if(e.target===document.getElementById(id)) closeModal(id); };
+
+// ── 카드 셀렉트 업데이트 ──
+function updateCardSelects() {
+  const opts = '<option value="현금">현금</option>' +
+    cards.map(c=>`<option value="${c.owner}_${c.name}">${c.owner}_${c.name}</option>`).join('');
+  document.getElementById('exp-card').innerHTML = opts;
+  document.getElementById('edit-exp-card').innerHTML = opts;
+}
 
 // ── 지출 ──
 window.addExp = async () => {
@@ -539,11 +510,11 @@ window.updateExp = async () => {
   const person = document.getElementById('edit-exp-person').value;
   const memo = document.getElementById('edit-exp-memo').value.trim();
   if(!name||!amt){ alert('항목명과 금액을 입력해 주세요'); return; }
-  const { updateDoc } = await import("https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js");
   await updateDoc(doc(db,'expenses',id), {name,amt,date,cat,card,person,memo});
   closeModal('modal-exp-edit');
 };
-window.filterExp = (v, btn) => {
+
+window.filterExp = (v,btn) => {
   expFilter = v;
   document.querySelectorAll('#page-book .seg-btn').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
@@ -552,7 +523,11 @@ window.filterExp = (v, btn) => {
 
 function renderExpenses() {
   const ym = nowYM();
-  const list = expenses.filter(e => e.date?.startsWith(ym) && (expFilter==='all'||e.person===expFilter));
+  // 날짜 내림차순 정렬
+  const list = expenses
+    .filter(e=>e.date?.startsWith(ym)&&(expFilter==='all'||e.person===expFilter))
+    .sort((a,b)=>b.date?.localeCompare(a.date)||b.createdAt-a.createdAt);
+
   const incTotal = incomes.filter(i=>i.date?.startsWith(ym)).reduce((s,i)=>s+i.amt,0);
   const savTotal = savings.reduce((s,sv)=>s+sv.amt,0);
   const spent = list.reduce((s,e)=>s+e.amt,0);
@@ -599,7 +574,6 @@ window.addIncome = async () => {
   document.getElementById('inc-memo').value='';
   closeModal('modal-income');
 };
-
 window.delIncome = async (id) => { if(confirm('삭제할까요?')) await deleteDoc(doc(db,'incomes',id)); };
 
 function renderIncomes() {
@@ -609,9 +583,9 @@ function renderIncomes() {
   const extra = list.filter(i=>i.type!=='급여').reduce((s,i)=>s+i.amt,0);
   document.getElementById('income-total').textContent = fmt(total);
   document.getElementById('income-extra').textContent = fmt(extra);
-
   ['이설','상훈'].forEach(p=>{
-    const pList = list.filter(i=>i.person===p||i.person==='공동');
+    const pList = list.filter(i=>i.person===p||i.person==='공동')
+      .sort((a,b)=>b.date?.localeCompare(a.date)||b.createdAt-a.createdAt);
     const el = document.getElementById('income-list-'+p);
     if(!pList.length){ el.innerHTML='<div class="empty-state" style="padding:16px 0">내역이 없어요</div>'; return; }
     el.innerHTML = pList.map(i=>`
@@ -630,54 +604,76 @@ function renderIncomes() {
   });
 }
 
-// ── 카드 실적 ──
-const DEFAULT_CARDS = [
-  {id:'이설_삼성카드',owner:'이설',name:'삼성카드',payDay:'13일',target:0},
-  {id:'이설_하나카드',owner:'이설',name:'하나카드',payDay:'13일',target:0},
-  {id:'상훈_삼성카드',owner:'상훈',name:'삼성카드',payDay:'13일',target:0},
-  {id:'상훈_롯데카드',owner:'상훈',name:'롯데카드',payDay:'14일',target:0},
-  {id:'상훈_현대카드',owner:'상훈',name:'현대카드',payDay:'12일',target:0},
-];
-
+// ── 카드 ──
 async function loadCards() {
   const snap = await getDoc(doc(db,'settings','cards'));
-  cards = snap.exists() ? snap.data().list : DEFAULT_CARDS;
+  cards = snap.exists() ? snap.data().list : [
+    {id:'이설_삼성카드',owner:'이설',name:'삼성카드',payDay:'13일',target:0},
+    {id:'이설_하나카드',owner:'이설',name:'하나카드',payDay:'13일',target:0},
+    {id:'상훈_삼성카드',owner:'상훈',name:'삼성카드',payDay:'13일',target:0},
+    {id:'상훈_롯데카드',owner:'상훈',name:'롯데카드',payDay:'14일',target:0},
+    {id:'상훈_현대카드',owner:'상훈',name:'현대카드',payDay:'12일',target:0},
+  ];
+  updateCardSelects();
   renderCardPerf();
-  renderCardSettings();
 }
 
-window.filterCard = (v, btn) => {
+async function saveCards() {
+  await setDoc(doc(db,'settings','cards'), {list:cards});
+  updateCardSelects();
+  renderCardPerf();
+}
+
+window.addCard = async () => {
+  const name = document.getElementById('new-card-name').value.trim();
+  const owner = document.getElementById('new-card-owner').value;
+  const payDay = document.getElementById('new-card-payday').value;
+  const target = parseInt(document.getElementById('new-card-target').value)||0;
+  if(!name){ alert('카드 이름을 입력해 주세요'); return; }
+  cards.push({id:`${owner}_${name}_${Date.now()}`,owner,name,payDay,target});
+  await saveCards();
+  document.getElementById('new-card-name').value='';
+  document.getElementById('new-card-target').value='';
+  closeModal('modal-card-add');
+};
+
+window.delCard = async (id) => {
+  if(!confirm('카드를 삭제할까요?')) return;
+  cards = cards.filter(c=>c.id!==id);
+  await saveCards();
+};
+
+window.openCardEditModal = (id) => {
+  const c = cards.find(c=>c.id===id);
+  if(!c) return;
+  document.getElementById('edit-card-id').value = id;
+  document.getElementById('edit-card-target').value = c.target||'';
+  document.getElementById('edit-card-payday').value = c.payDay||'';
+  openModal('modal-card-edit');
+};
+
+window.updateCard = async () => {
+  const id = document.getElementById('edit-card-id').value;
+  const target = parseInt(document.getElementById('edit-card-target').value)||0;
+  const payDay = document.getElementById('edit-card-payday').value;
+  const c = cards.find(c=>c.id===id);
+  if(c){ c.target=target; c.payDay=payDay; }
+  await saveCards();
+  closeModal('modal-card-edit');
+};
+
+window.filterCard = (v,btn) => {
   cardFilter = v;
   document.querySelectorAll('#page-card .seg-btn').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
   renderCardPerf();
 };
 
-window.saveCardTargets = async () => {
-  DEFAULT_CARDS.forEach(c=>{
-    const inp = document.getElementById('target-'+c.id);
-    if(inp){ const found=cards.find(x=>x.id===c.id); if(found) found.target=parseInt(inp.value)||0; }
-  });
-  await setDoc(doc(db,'settings','cards'),{list:cards});
-  renderCardPerf();
-};
-
-function renderCardSettings() {
-  document.getElementById('card-setting-list').innerHTML =
-    DEFAULT_CARDS.map(c=>{
-      const cur = cards.find(x=>x.id===c.id)||c;
-      return `<div style="margin-bottom:12px">
-        <div style="font-size:13px;font-weight:500;margin-bottom:6px;color:var(--text2)">${c.owner} · ${c.name} (결제일 ${c.payDay})</div>
-        <input type="number" id="target-${c.id}" placeholder="목표 실적 (원)" value="${cur.target||''}" inputmode="numeric" style="margin:0">
-      </div>`;
-    }).join('');
-}
-
 function renderCardPerf() {
   const ym = nowYM();
   const filtered = cards.filter(c=>cardFilter==='all'||c.owner===cardFilter);
   const el = document.getElementById('card-perf-list');
-  if(!filtered.length){ el.innerHTML='<div class="empty-state">카드가 없어요</div>'; return; }
+  if(!filtered.length){ el.innerHTML='<div class="empty-state">등록된 카드가 없어요</div>'; return; }
   el.innerHTML = filtered.map(c=>{
     const used = expenses.filter(e=>e.date?.startsWith(ym)&&e.card===c.id).reduce((s,e)=>s+e.amt,0);
     const pct = c.target ? Math.min(100,Math.round(used/c.target*100)) : 0;
@@ -687,15 +683,19 @@ function renderCardPerf() {
       <div class="perf-top">
         <div>
           <div class="perf-name">${c.name}</div>
-          <div class="perf-owner">${c.owner} · 결제일 매월 ${c.payDay}</div>
+          <div class="perf-owner">${c.owner}${c.payDay?' · 결제일 매월 '+c.payDay:''}</div>
         </div>
-        <div style="text-align:right">
-          <div class="perf-pct" style="color:${color}">${pct}%</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:2px">${pct>=100?'✅ 실적 달성':need?fmt(need)+' 더 필요':c.target?'':'목표 미설정'}</div>
+        <div style="text-align:right;display:flex;align-items:center;gap:8px">
+          <div>
+            <div class="perf-pct" style="color:${color}">${pct}%</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px">${pct>=100?'✅ 실적 달성':need?fmt(need)+' 더 필요':c.target?'':'실적 미설정'}</div>
+          </div>
+          <button class="del-btn" style="font-size:16px;color:var(--text2)" onclick="openCardEditModal('${c.id}')">✎</button>
+          <button class="del-btn" onclick="delCard('${c.id}')">×</button>
         </div>
       </div>
       <div class="prog-bg"><div class="prog-fill" style="width:${pct}%;background:${color}"></div></div>
-      <div class="perf-detail"><span>${fmt(used)} 사용</span><span>목표 ${c.target?fmt(c.target):'미설정'}</span></div>
+      <div class="perf-detail"><span>${fmt(used)} 사용</span><span>실적 목표 ${c.target?fmt(c.target):'미설정'}</span></div>
     </div>`;
   }).join('');
 }
@@ -712,23 +712,19 @@ window.addSaving = async () => {
   const memo = document.getElementById('sav-memo').value.trim();
   if(!name||!amt){ alert('상품명과 납입금액을 입력해 주세요'); return; }
   await addDoc(collection(db,'savings'),{name,type,amt,rate,start,maturity,owner,memo,createdAt:Date.now()});
-  ['sav-name','sav-amt','sav-rate','sav-start','sav-maturity','sav-memo'].forEach(id=>{document.getElementById(id).value='';});
+  ['sav-name','sav-amt','sav-rate','sav-maturity','sav-memo'].forEach(id=>{document.getElementById(id).value='';});
   document.getElementById('sav-start').value=today();
   closeModal('modal-saving');
 };
-
 window.delSaving = async (id) => { if(confirm('삭제할까요?')) await deleteDoc(doc(db,'savings',id)); };
 
 function calcExpect(sv) {
   if(!sv.maturity||!sv.start||!sv.rate) return null;
   const months = Math.max(1,Math.round((new Date(sv.maturity)-new Date(sv.start))/(1000*60*60*24*30.44)));
-  if(sv.type==='적금'){
-    return Math.round(sv.amt*months + sv.amt*months*(months+1)/2*(sv.rate/100/12));
-  } else {
-    return Math.round(sv.amt*(1+(sv.rate/100)*(months/12)));
-  }
+  return sv.type==='적금'
+    ? Math.round(sv.amt*months + sv.amt*months*(months+1)/2*(sv.rate/100/12))
+    : Math.round(sv.amt*(1+(sv.rate/100)*(months/12)));
 }
-
 function dDay(maturity) {
   if(!maturity) return {text:'만기일 미설정',color:'var(--text3)'};
   const diff = Math.ceil((new Date(maturity)-new Date())/(1000*60*60*24));
@@ -738,20 +734,16 @@ function dDay(maturity) {
   if(diff<=90) return {text:'D-'+diff,color:'var(--amber)'};
   return {text:'D-'+diff,color:'var(--green)'};
 }
-
 function progPct(start,maturity) {
   if(!start||!maturity) return 0;
   const s=new Date(start),m=new Date(maturity),n=new Date();
   return Math.min(100,Math.max(0,Math.round((n-s)/(m-s)*100)));
 }
-
 function renderSavings() {
   const monthly = savings.reduce((s,sv)=>s+sv.amt,0);
-  const expects = savings.map(calcExpect).filter(Boolean);
-  const totalExpect = expects.reduce((a,b)=>a+b,0);
+  const totalExpect = savings.map(calcExpect).filter(Boolean).reduce((a,b)=>a+b,0);
   document.getElementById('sav-monthly').textContent = fmt(monthly);
   document.getElementById('sav-expect').textContent = totalExpect?fmt(totalExpect):'—';
-
   const el = document.getElementById('sav-list');
   if(!savings.length){ el.innerHTML='<div class="empty-state">등록된 예적금이 없어요</div>'; return; }
   el.innerHTML = savings.map(sv=>{
@@ -771,7 +763,7 @@ function renderSavings() {
         <div class="sav-item"><label>월 납입금액</label><span class="teal-text">${fmt(sv.amt)}</span></div>
         <div class="sav-item"><label>이율</label><span>${sv.rate?sv.rate+'%':'—'}</span></div>
         <div class="sav-item"><label>시작일</label><span>${sv.start||'—'}</span></div>
-        <div class="sav-item"><label>만기일 (D-day)</label><span style="color:${dd.color}">${sv.maturity?sv.maturity+' '+dd.text:dd.text}</span></div>
+        <div class="sav-item"><label>만기일</label><span style="color:${dd.color}">${sv.maturity?sv.maturity+' '+dd.text:dd.text}</span></div>
       </div>
       ${sv.start&&sv.maturity?`<div class="prog-bg"><div class="prog-fill" style="width:${pct}%;background:var(--teal)"></div></div>
       <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:8px"><span>진행률</span><span>${pct}%</span></div>`:''}
@@ -785,7 +777,7 @@ function renderSavings() {
 
 // ── 월별 요약 ──
 function buildMonthOptions() {
-  const all = [...new Set([...expenses.map(e=>e.date?.slice(0,7)), ...incomes.map(i=>i.date?.slice(0,7)), nowYM()].filter(Boolean))].sort().reverse();
+  const all = [...new Set([...expenses.map(e=>e.date?.slice(0,7)),...incomes.map(i=>i.date?.slice(0,7)),nowYM()].filter(Boolean))].sort().reverse();
   const sel = document.getElementById('summary-month');
   const cur = sel.value || nowYM();
   sel.innerHTML = all.map(m=>`<option value="${m}" ${m===cur?'selected':''}>${m}</option>`).join('');
@@ -800,17 +792,15 @@ window.renderSummary = () => {
   const savMonthly = savings.reduce((s,sv)=>s+sv.amt,0);
   const incTotal = incs.reduce((s,i)=>s+i.amt,0);
   const remain = incTotal - spent - savMonthly;
-
   document.getElementById('sum-spent').textContent = fmt(spent);
   document.getElementById('sum-remain').textContent = incTotal?fmt(remain):'수입 입력 필요';
   document.getElementById('sum-remain').style.color = remain<0?'var(--red)':'var(--green)';
 
-  // 평균 대비 배지
   const allMonths = [...new Set(expenses.map(e=>e.date?.slice(0,7)).filter(Boolean))].sort();
   const pastMonths = allMonths.filter(m=>m!==ym);
   if(pastMonths.length>0){
     const pastAvg = Math.round(pastMonths.map(m=>expenses.filter(e=>e.date?.startsWith(m)).reduce((s,e)=>s+e.amt,0)).reduce((a,b)=>a+b,0)/pastMonths.length);
-    const diff = spent - pastAvg;
+    const diff = spent-pastAvg;
     const sign = diff>0?'+':'';
     const col = diff>0?'var(--red)':'var(--green)';
     const bg = diff>0?'var(--red-bg)':'var(--green-bg)';
@@ -819,7 +809,6 @@ window.renderSummary = () => {
     document.getElementById('sum-avg-badge').innerHTML='';
   }
 
-  // 카테고리별
   const catMap={};
   exps.forEach(e=>{catMap[e.cat]=(catMap[e.cat]||0)+e.amt;});
   const cats=Object.keys(catMap).sort((a,b)=>catMap[b]-catMap[a]);
@@ -833,7 +822,6 @@ window.renderSummary = () => {
       </div>`).join('');
   }
 
-  // 평균 대비 카테고리
   const avgEl=document.getElementById('sum-avg-compare');
   if(pastMonths.length>0){
     const allCats=[...new Set(expenses.map(e=>e.cat))];
@@ -879,12 +867,6 @@ await loadCards();
 document.getElementById('loading').style.display='none';
 document.getElementById('app').style.display='block';
 buildMonthOptions();
-
-// 전역 노출
-window.delIncome = window.delIncome;
-window.delExp = window.delExp;
-window.delSaving = window.delSaving;
-window.renderSummary = renderSummary;
 </script>
 </body>
 </html>
