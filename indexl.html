@@ -314,7 +314,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
           <select id="exp-card">
             <option value="현금">현금</option>
             <option>이설_삼성카드</option><option>이설_하나카드</option>
-            <option>남편_삼성카드</option><option>남편_롯데카드</option><option>남편_현대카드</option>
+            <option>상훈_삼성카드</option><option>상훈_롯데카드</option><option>상훈_현대카드</option>
           </select>
         </div>
       </div>
@@ -351,7 +351,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
         </div>
         <div class="select-wrap">
           <select id="inc-person">
-            <option>이설</option><option>남편</option><option>공동</option>
+            <option>이설</option><option>상훈</option><option>공동</option>
           </select>
         </div>
       </div>
@@ -560,9 +560,9 @@ function renderIncomes() {
 const DEFAULT_CARDS = [
   {id:'이설_삼성카드',owner:'이설',name:'삼성카드',payDay:'13일',target:0},
   {id:'이설_하나카드',owner:'이설',name:'하나카드',payDay:'13일',target:0},
-  {id:'남편_삼성카드',owner:'남편',name:'삼성카드',payDay:'13일',target:0},
-  {id:'남편_롯데카드',owner:'남편',name:'롯데카드',payDay:'14일',target:0},
-  {id:'남편_현대카드',owner:'남편',name:'현대카드',payDay:'12일',target:0},
+  {id:'상훈_삼성카드',owner:'상훈',name:'삼성카드',payDay:'13일',target:0},
+  {id:'상훈_롯데카드',owner:'상훈',name:'롯데카드',payDay:'14일',target:0},
+  {id:'상훈_현대카드',owner:'상훈',name:'현대카드',payDay:'12일',target:0},
 ];
 
 async function loadCards() {
