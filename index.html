@@ -34,8 +34,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 #loading .logo{font-size:36px}
 #loading p{font-size:14px;color:var(--text2)}
 /* 네비게이션 */
-#nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:0.5px solid var(--border);display:flex;z-index:100;padding-bottom:max(env(safe-area-inset-bottom), 20px)}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;gap:3px;border:none;background:none;color:var(--text3);font-size:10px;cursor:pointer;transition:color .15s}
+#nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:0.5px solid var(--border);display:flex;z-index:100;height:calc(56px + max(env(safe-area-inset-bottom), 20px))}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 4px calc(max(env(safe-area-inset-bottom), 20px) / 2);gap:3px;border:none;background:none;color:var(--text3);font-size:10px;cursor:pointer;transition:color .15s}
 .nav-btn.on{color:var(--blue)}
 .nav-btn svg{width:22px;height:22px}
 /* 페이지 */
