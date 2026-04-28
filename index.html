@@ -568,6 +568,7 @@ function renderExpenses() {
   document.getElementById('book-joint-remain').textContent = livingOut ? fmt(jointRemain) : '—';
   document.getElementById('book-joint-remain').style.color = jointRemain<0?'var(--red)':'var(--amber)';
 
+  // 리스트 렌더링
   const el = document.getElementById('exp-list');
   if(!list.length){ el.innerHTML='<div class="empty-state">지출 내역이 없어요</div>'; return; }
   el.innerHTML = `<div class="card" style="padding:0 16px">`+
