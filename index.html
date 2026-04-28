@@ -50,7 +50,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .joint-right{text-align:right}
 .joint-row{margin-bottom:4px}
 .joint-row label{font-size:11px;color:var(--amber)}
-.joint-row span{font-size:14px;font-weight:600;color:var(--text);margin-left:6px;display:block;text-align:right;margin-top:2px}
+.joint-row span{font-size:14px;font-weight:600;color:var(--text);display:block;text-align:right;margin-top:2px}
 .form-group{display:flex;flex-direction:column;gap:8px}
 .form-row{display:grid;gap:8px}.form-row.col2{grid-template-columns:1fr 1fr}
 input,select{width:100%;padding:11px 13px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:15px;background:var(--bg2);color:var(--text);outline:none;-webkit-appearance:none;appearance:none}
@@ -467,7 +467,6 @@ function renderExpenses(){
   document.getElementById('book-income').textContent=fmt(personalIncome);
   document.getElementById('book-saving').textContent=fmt(savTotal);
   document.getElementById('book-spent').textContent=fmt(realSpent);
-  document.getElementById('book-joint-in').textContent=fmt(livingIn);
   document.getElementById('book-joint-out').textContent=fmt(livingSpent);
   document.getElementById('book-joint-remain').textContent=livingIn?fmt(jointRemain):'—';
   document.getElementById('book-joint-remain').style.color=jointRemain<0?'var(--red)':'var(--amber)';
