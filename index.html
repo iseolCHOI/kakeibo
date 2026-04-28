@@ -333,6 +333,48 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
   </div>
 </div>
 
+<!-- 지출 수정 모달 -->
+<div class="modal-backdrop" id="modal-exp-edit" onclick="closeModalOutside(event,'modal-exp-edit')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">지출 수정</div>
+    <input type="hidden" id="edit-exp-id">
+    <div class="form-group">
+      <div class="form-row col2">
+        <input type="text" id="edit-exp-name" placeholder="항목 이름">
+        <input type="number" id="edit-exp-amt" placeholder="금액" inputmode="numeric">
+      </div>
+      <input type="date" id="edit-exp-date">
+      <div class="form-row col2">
+        <div class="select-wrap">
+          <select id="edit-exp-cat">
+            <option value="">카테고리</option>
+            <option>식비</option><option>교통</option><option>쇼핑</option>
+            <option>주거</option><option>의료</option><option>문화/여가</option>
+            <option>용돈</option><option>보험</option><option>기타</option>
+          </select>
+        </div>
+        <div class="select-wrap">
+          <select id="edit-exp-card">
+            <option value="현금">현금</option>
+            <option>이설_삼성카드</option><option>이설_하나카드</option>
+            <option>상훈_삼성카드</option><option>상훈_롯데카드</option><option>상훈_현대카드</option>
+          </select>
+        </div>
+      </div>
+      <div class="select-wrap">
+        <select id="edit-exp-person">
+          <option value="이설">이설</option>
+          <option value="상훈">상훈</option>
+          <option value="공동">공동</option>
+        </select>
+      </div>
+      <input type="text" id="edit-exp-memo" placeholder="메모 (선택)">
+      <button class="submit-btn" onclick="updateExp()">수정 완료</button>
+    </div>
+  </div>
+</div>
+
 <!-- 수입 모달 -->
 <div class="modal-backdrop" id="modal-income" onclick="closeModalOutside(event,'modal-income')">
   <div class="modal">
@@ -472,6 +514,35 @@ window.addExp = async () => {
 };
 
 window.delExp = async (id) => { if(confirm('삭제할까요?')) await deleteDoc(doc(db,'expenses',id)); };
+
+window.openEditModal = (id) => {
+  const e = expenses.find(e=>e.id===id);
+  if(!e) return;
+  document.getElementById('edit-exp-id').value = id;
+  document.getElementById('edit-exp-name').value = e.name;
+  document.getElementById('edit-exp-amt').value = e.amt;
+  document.getElementById('edit-exp-date').value = e.date;
+  document.getElementById('edit-exp-cat').value = e.cat;
+  document.getElementById('edit-exp-card').value = e.card;
+  document.getElementById('edit-exp-person').value = e.person;
+  document.getElementById('edit-exp-memo').value = e.memo||'';
+  openModal('modal-exp-edit');
+};
+
+window.updateExp = async () => {
+  const id = document.getElementById('edit-exp-id').value;
+  const name = document.getElementById('edit-exp-name').value.trim();
+  const amt = parseInt(document.getElementById('edit-exp-amt').value)||0;
+  const date = document.getElementById('edit-exp-date').value;
+  const cat = document.getElementById('edit-exp-cat').value||'기타';
+  const card = document.getElementById('edit-exp-card').value;
+  const person = document.getElementById('edit-exp-person').value;
+  const memo = document.getElementById('edit-exp-memo').value.trim();
+  if(!name||!amt){ alert('항목명과 금액을 입력해 주세요'); return; }
+  const { updateDoc } = await import("https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js");
+  await updateDoc(doc(db,'expenses',id), {name,amt,date,cat,card,person,memo});
+  closeModal('modal-exp-edit');
+};
 window.filterExp = (v, btn) => {
   expFilter = v;
   document.querySelectorAll('#page-book .seg-btn').forEach(b=>b.classList.remove('on'));
@@ -507,6 +578,7 @@ function renderExpenses() {
       </div>
       <div class="item-right">
         <span class="item-amt red-text">-${fmt(e.amt)}</span>
+        <button class="del-btn" style="font-size:16px;color:var(--text2)" onclick="openEditModal('${e.id}')">✎</button>
         <button class="del-btn" onclick="delExp('${e.id}')">×</button>
       </div>
     </div>`).join('')+`</div>`;
