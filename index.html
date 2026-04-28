@@ -223,7 +223,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
           <option value="">카테고리</option>
           <option>식비</option><option>교통</option><option>쇼핑</option><option>주거</option>
           <option>의료</option><option>문화/여가</option><option>용돈</option><option>보험</option>
-          <option>생활비</option><option>기타</option>
+          <option>기타</option>
         </select></div>
         <div class="sel-wrap"><select id="exp-card"></select></div>
       </div>
@@ -251,7 +251,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
           <option value="">카테고리</option>
           <option>식비</option><option>교통</option><option>쇼핑</option><option>주거</option>
           <option>의료</option><option>문화/여가</option><option>용돈</option><option>보험</option>
-          <option>생활비</option><option>기타</option>
+          <option>기타</option>
         </select></div>
         <div class="sel-wrap"><select id="edit-exp-card"></select></div>
       </div>
@@ -454,9 +454,9 @@ function renderExpenses(){
   // 수입: 생활비 각출 합계 / 개인 수입
   const livingIn=incomes.filter(i=>i.date?.startsWith(ym)&&i.type==='생활비').reduce((s,i)=>s+i.amt,0);
   const personalIncome=incomes.filter(i=>i.date?.startsWith(ym)&&i.type!=='생활비').reduce((s,i)=>s+i.amt,0);
-  // 지출: 생활비 카테고리 / 나머지 실소비
-  const livingSpent=expenses.filter(e=>e.date?.startsWith(ym)&&e.cat==='생활비').reduce((s,e)=>s+e.amt,0);
-  const realSpent=expenses.filter(e=>e.date?.startsWith(ym)&&e.cat!=='생활비').reduce((s,e)=>s+e.amt,0);
+  // 지출: 모임통장 결제 항목 / 나머지 실소비
+  const livingSpent=expenses.filter(e=>e.date?.startsWith(ym)&&e.card==='모임통장').reduce((s,e)=>s+e.amt,0);
+  const realSpent=expenses.filter(e=>e.date?.startsWith(ym)&&e.card!=='모임통장').reduce((s,e)=>s+e.amt,0);
   const savTotal=savings.reduce((s,sv)=>s+sv.amt,0);
   // 개인 남은 금액 = 개인수입 - 생활비각출 - 저축 - 실소비
   const remain=personalIncome-livingIn-savTotal-realSpent;
@@ -701,7 +701,7 @@ window.renderSummary = () => {
   const ym=document.getElementById('summary-month').value||nowYM();
   const exps=expenses.filter(e=>e.date?.startsWith(ym));
   const incs=incomes.filter(i=>i.date?.startsWith(ym));
-  const spent=exps.filter(e=>e.cat!=='생활비').reduce((s,e)=>s+e.amt,0);
+  const spent=exps.filter(e=>e.card!=='모임통장').reduce((s,e)=>s+e.amt,0);
   const incTotal=incs.filter(i=>i.type!=='생활비').reduce((s,i)=>s+i.amt,0);
   const savMonthly=savings.reduce((s,sv)=>s+sv.amt,0);
   const remain=incTotal-spent-savMonthly;
@@ -718,7 +718,7 @@ window.renderSummary = () => {
   }else document.getElementById('sum-avg-badge').innerHTML='';
 
   const catMap={};
-  exps.filter(e=>e.cat!=='생활비').forEach(e=>{catMap[e.cat]=(catMap[e.cat]||0)+e.amt;});
+  exps.filter(e=>e.card!=='모임통장').forEach(e=>{catMap[e.cat]=(catMap[e.cat]||0)+e.amt;});
   const cats=Object.keys(catMap).sort((a,b)=>catMap[b]-catMap[a]);
   const catEl=document.getElementById('sum-cat-list');
   catEl.innerHTML=cats.length?cats.map(c=>`
@@ -729,9 +729,9 @@ window.renderSummary = () => {
 
   const avgEl=document.getElementById('sum-avg-compare');
   if(pastMonths.length>0){
-    const allCats=[...new Set(expenses.filter(e=>e.cat!=='생활비').map(e=>e.cat))];
+    const allCats=[...new Set(expenses.filter(e=>e.card!=='모임통장').map(e=>e.cat))];
     const rows=allCats.map(cat=>{
-      const curAmt=exps.filter(e=>e.cat===cat).reduce((s,e)=>s+e.amt,0);
+      const curAmt=exps.filter(e=>e.cat===cat&&e.card!=='모임통장').reduce((s,e)=>s+e.amt,0);
       const avg=Math.round(pastMonths.map(m=>expenses.filter(e=>e.date?.startsWith(m)&&e.cat===cat).reduce((s,e)=>s+e.amt,0)).reduce((a,b)=>a+b,0)/pastMonths.length);
       return{cat,curAmt,avg};
     }).filter(r=>r.curAmt>0||r.avg>0).sort((a,b)=>b.curAmt-a.curAmt);
