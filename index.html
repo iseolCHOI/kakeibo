@@ -719,7 +719,8 @@ window.renderSummary = () => {
   }else document.getElementById('sum-avg-badge').innerHTML='';
 
   const catMap={};
-  exps.filter(e=>e.card!=='모임통장').forEach(e=>{catMap[e.cat]=(catMap[e.cat]||0)+e.amt;});
+  // 필터 조건을 지우고 모든 지출(exps)을 카테고리 기준으로 합산합니다.
+  exps.forEach(e=>{catMap[e.cat]=(catMap[e.cat]||0)+e.amt;});
   const cats=Object.keys(catMap).sort((a,b)=>catMap[b]-catMap[a]);
   const catEl=document.getElementById('sum-cat-list');
   catEl.innerHTML=cats.length?cats.map(c=>`
