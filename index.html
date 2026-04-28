@@ -158,12 +158,28 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
     <button class="header-btn" onclick="openModal('modal-exp')">+ 지출 추가</button>
   </div>
   <div class="hero">
-    <div class="hero-label">이번 달 남은 금액</div>
+    <div class="hero-label">이번 달 남은 금액 (개인)</div>
     <div class="hero-amount" id="book-remain">—</div>
-    <div class="hero-sub">
+    <div class="hero-sub" style="grid-template-columns:1fr 1fr">
       <div class="hero-item"><div class="hero-item-label">총 수입</div><div class="hero-item-val blue-text" id="book-income">—</div></div>
+      <div class="hero-item"><div class="hero-item-label">생활비 각출</div><div class="hero-item-val" style="color:var(--amber)" id="book-living">0원</div></div>
       <div class="hero-item"><div class="hero-item-label">저축</div><div class="hero-item-val teal-text" id="book-saving">—</div></div>
       <div class="hero-item"><div class="hero-item-label">실소비</div><div class="hero-item-val red-text" id="book-spent">0</div></div>
+    </div>
+  </div>
+  <!-- 생활비(모임통장) 잔액 카드 -->
+  <div class="card" style="background:var(--amber-bg);border-color:var(--amber)">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:12px;color:var(--amber);font-weight:500;margin-bottom:4px">생활비 잔액 (모임통장)</div>
+        <div style="font-size:22px;font-weight:700;color:var(--amber)" id="book-joint-remain">—</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:2px">총 각출</div>
+        <div style="font-size:14px;font-weight:600;color:var(--text)" id="book-joint-in">—</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:6px;margin-bottom:2px">공동 지출</div>
+        <div style="font-size:14px;font-weight:600;color:var(--red)" id="book-joint-out">0원</div>
+      </div>
     </div>
   </div>
   <div class="segment">
@@ -324,7 +340,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
         <div class="select-wrap">
           <select id="inc-type">
             <option>급여</option><option>부업</option><option>용돈</option>
-            <option>환급금</option><option>상여금</option><option>기타</option>
+            <option>생활비</option><option>환급금</option><option>상여금</option><option>기타</option>
           </select>
         </div>
         <div class="select-wrap">
@@ -462,6 +478,7 @@ window.closeModalOutside = (e,id) => { if(e.target===document.getElementById(id)
 // ── 카드 셀렉트 업데이트 ──
 function updateCardSelects() {
   const opts = '<option value="현금">현금</option>' +
+    '<option value="모임통장">모임통장</option>' +
     cards.map(c=>`<option value="${c.owner}_${c.name}">${c.owner}_${c.name}</option>`).join('');
   document.getElementById('exp-card').innerHTML = opts;
   document.getElementById('edit-exp-card').innerHTML = opts;
@@ -523,21 +540,33 @@ window.filterExp = (v,btn) => {
 
 function renderExpenses() {
   const ym = nowYM();
-  // 날짜 내림차순 정렬
   const list = expenses
     .filter(e=>e.date?.startsWith(ym)&&(expFilter==='all'||e.person===expFilter))
     .sort((a,b)=>b.date?.localeCompare(a.date)||b.createdAt-a.createdAt);
 
-  const incTotal = incomes.filter(i=>i.date?.startsWith(ym)).reduce((s,i)=>s+i.amt,0);
+  // 수입에서 생활비 각출 합계
+  const livingOut = incomes.filter(i=>i.date?.startsWith(ym)&&i.type==='생활비').reduce((s,i)=>s+i.amt,0);
+  // 개인 수입 (생활비 각출 제외)
+  const personalIncome = incomes.filter(i=>i.date?.startsWith(ym)&&i.type!=='생활비').reduce((s,i)=>s+i.amt,0);
   const savTotal = savings.reduce((s,sv)=>s+sv.amt,0);
-  const spent = list.reduce((s,e)=>s+e.amt,0);
-  const remain = incTotal - spent - savTotal;
+  // 개인 지출 (공동 제외)
+  const personalSpent = expenses.filter(e=>e.date?.startsWith(ym)&&e.person!=='공동').reduce((s,e)=>s+e.amt,0);
+  // 공동 지출 (모임통장)
+  const jointSpent = expenses.filter(e=>e.date?.startsWith(ym)&&e.person==='공동').reduce((s,e)=>s+e.amt,0);
 
-  document.getElementById('book-remain').textContent = incTotal ? fmt(remain) : '수입을 먼저 입력해 주세요';
+  const remain = personalIncome - livingOut - savTotal - personalSpent;
+  const jointRemain = livingOut - jointSpent;
+
+  document.getElementById('book-remain').textContent = personalIncome ? fmt(remain) : '수입을 먼저 입력해 주세요';
   document.getElementById('book-remain').style.color = remain<0?'var(--red)':remain===0?'var(--text)':'var(--green)';
-  document.getElementById('book-income').textContent = fmt(incTotal);
+  document.getElementById('book-income').textContent = fmt(personalIncome);
+  document.getElementById('book-living').textContent = livingOut ? '-'+fmt(livingOut) : '0원';
   document.getElementById('book-saving').textContent = fmt(savTotal);
-  document.getElementById('book-spent').textContent = fmt(spent);
+  document.getElementById('book-spent').textContent = fmt(personalSpent);
+  document.getElementById('book-joint-in').textContent = fmt(livingOut);
+  document.getElementById('book-joint-out').textContent = fmt(jointSpent);
+  document.getElementById('book-joint-remain').textContent = livingOut ? fmt(jointRemain) : '—';
+  document.getElementById('book-joint-remain').style.color = jointRemain<0?'var(--red)':'var(--amber)';
 
   const el = document.getElementById('exp-list');
   if(!list.length){ el.innerHTML='<div class="empty-state">지출 내역이 없어요</div>'; return; }
