@@ -332,6 +332,35 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
   </div>
 </div>
 
+<div class="modal-backdrop" id="modal-sav-edit" onclick="closeModalOutside(event,'modal-sav-edit')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">예적금 수정</div>
+    <input type="hidden" id="edit-sav-id">
+    <div class="form-group">
+      <div class="form-row col2">
+        <input type="text" id="edit-sav-name" placeholder="상품명">
+        <div class="sel-wrap"><select id="edit-sav-type"><option>적금</option><option>예금</option></select></div>
+      </div>
+      <div class="form-row col2">
+        <div class="sel-wrap"><select id="edit-sav-cycle" onchange="changeEditSavCycle()"><option value="monthly">매월</option><option value="weekly">매주</option><option value="once">일시납</option></select></div>
+        <div class="sel-wrap"><select id="edit-sav-payday"></select></div>
+      </div>
+      <div class="form-row col2">
+        <input type="number" id="edit-sav-amt" placeholder="1회 납입액" inputmode="numeric">
+        <input type="number" id="edit-sav-rate" placeholder="이율 (%)" step="0.01" inputmode="decimal">
+      </div>
+      <div class="form-row col2">
+        <input type="date" id="edit-sav-start" placeholder="시작일">
+        <input type="date" id="edit-sav-maturity" placeholder="만기일">
+      </div>
+      <div class="sel-wrap"><select id="edit-sav-owner"><option>이설</option><option>상훈</option><option>공동</option></select></div>
+      <input type="text" id="edit-sav-memo" placeholder="메모 (선택)">
+      <button class="submit-btn" onclick="updateSaving()">수정 완료</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
 import {
@@ -371,10 +400,25 @@ document.getElementById('exp-date').value=toDate();
 document.getElementById('inc-date').value=toDate();
 document.getElementById('sav-start').value=toDate();
 
-// 예적금 주기 셀렉트 동적 변경
+// 예적금 주기 셀렉트 동적 변경 (추가 모달)
 window.changeSavCycle = () => {
   const c = document.getElementById('sav-cycle').value;
   const pd = document.getElementById('sav-payday');
+  if(c === 'once') { pd.style.display='none'; return; }
+  pd.style.display='block';
+  pd.innerHTML='';
+  if(c === 'monthly') {
+    for(let i=1;i<=31;i++) pd.innerHTML+=`<option value="${i}">${i}일</option>`;
+  } else if(c === 'weekly') {
+    const days=['일','월','화','수','목','금','토'];
+    days.forEach((d,i)=>pd.innerHTML+=`<option value="${i}">${d}요일</option>`);
+  }
+};
+
+// 예적금 주기 셀렉트 동적 변경 (수정 모달)
+window.changeEditSavCycle = () => {
+  const c = document.getElementById('edit-sav-cycle').value;
+  const pd = document.getElementById('edit-sav-payday');
   if(c === 'once') { pd.style.display='none'; return; }
   pd.style.display='block';
   pd.innerHTML='';
@@ -392,43 +436,33 @@ function getDeductedSavings(sv, ym) {
   const curY = today.getFullYear(), curM = today.getMonth() + 1, curD = today.getDate();
   const [yStr, mStr] = ym.split('-');
   const y = parseInt(yStr), m = parseInt(mStr);
-  const svCycle = sv.cycle || 'monthly'; // 이전 데이터 호환성
+  const svCycle = sv.cycle || 'monthly';
   const svPayDay = sv.payDay || 1;
   
-  // 시작 전이거나 만기일이 지난 달인 경우 차감 안 함
   if(sv.start && sv.start.slice(0,7) > ym) return 0;
   if(sv.maturity && sv.maturity.slice(0,7) < ym) return 0;
 
-  // 일시납(예금)인 경우 가입한 달에만 1회 차감
   if(svCycle === 'once' || sv.type === '예금') {
     return (sv.start && sv.start.slice(0,7) === ym) ? sv.amt : 0;
   }
 
-  // 매월 납부
   if(svCycle === 'monthly') {
     const pDay = parseInt(svPayDay);
-    // 조회하는 달이 미래 달이면 0
     if(y > curY || (y === curY && m > curM)) return 0;
-    // 과거 달이면 1회 전액 차감
     if(y < curY || (y === curY && m < curM)) return sv.amt;
-    // 이번 달이면 현재 날짜가 결제일(pDay)을 지났는지 확인
     return curD >= pDay ? sv.amt : 0;
   }
 
-  // 매주 납부
   if(svCycle === 'weekly') {
-    const wDay = parseInt(svPayDay); // 0(일)~6(토)
+    const wDay = parseInt(svPayDay);
     let count = 0;
     const daysInMonth = new Date(y, m, 0).getDate();
     for(let d=1; d<=daysInMonth; d++) {
        const dateObj = new Date(y, m-1, d);
        if(dateObj.getDay() === wDay) {
-          // 미래 달이면 카운트 안 함
           if(y > curY || (y === curY && m > curM)) continue;
-          // 이번 달이면 오늘 이하일 때만 카운트, 과거 달은 모두 카운트
           if(y < curY || (y === curY && m < curM) || d <= curD) {
              const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-             // 적금 시작일 이후, 만기일 이전인지 체크
              if((!sv.start || dateStr >= sv.start) && (!sv.maturity || dateStr <= sv.maturity)) {
                  count++;
              }
@@ -518,7 +552,6 @@ function renderExpenses(){
   const livingSpent=expenses.filter(e=>e.date?.startsWith(ym)&&e.card==='모임통장').reduce((s,e)=>s+e.amt,0);
   const realSpent=expenses.filter(e=>e.date?.startsWith(ym)&&e.card!=='모임통장').reduce((s,e)=>s+e.amt,0);
   
-  // 날짜 기반 스마트 차감 계산
   const savTotal=savings.reduce((s,sv)=>s+getDeductedSavings(sv, ym),0);
   
   const remain=personalIncome-livingIn-savTotal-realSpent;
@@ -700,6 +733,48 @@ window.addSaving = async () => {
   document.getElementById('sav-start').value=toDate();
   closeModal('modal-saving');
 };
+
+// 예적금 수정 모달 열기
+window.openSavEditModal = id => {
+  const sv = savings.find(s => s.id === id); if(!sv) return;
+  document.getElementById('edit-sav-id').value = id;
+  document.getElementById('edit-sav-name').value = sv.name;
+  document.getElementById('edit-sav-type').value = sv.type;
+  document.getElementById('edit-sav-cycle').value = sv.cycle || 'monthly';
+  
+  changeEditSavCycle(); // 주기에 맞춰 결제일 옵션 재렌더링
+  if(sv.cycle !== 'once') {
+    document.getElementById('edit-sav-payday').value = sv.payDay || (sv.cycle === 'weekly' ? 0 : 1);
+  }
+  
+  document.getElementById('edit-sav-amt').value = sv.amt;
+  document.getElementById('edit-sav-rate').value = sv.rate || '';
+  document.getElementById('edit-sav-start').value = sv.start || '';
+  document.getElementById('edit-sav-maturity').value = sv.maturity || '';
+  document.getElementById('edit-sav-owner').value = sv.owner;
+  document.getElementById('edit-sav-memo').value = sv.memo || '';
+  openModal('modal-sav-edit');
+};
+
+// 예적금 수정 저장
+window.updateSaving = async () => {
+  const id = document.getElementById('edit-sav-id').value;
+  const name = document.getElementById('edit-sav-name').value.trim();
+  const type = document.getElementById('edit-sav-type').value;
+  const cycle = document.getElementById('edit-sav-cycle').value;
+  const payDay = parseInt(document.getElementById('edit-sav-payday').value)||0;
+  const amt = parseInt(document.getElementById('edit-sav-amt').value)||0;
+  const rate = parseFloat(document.getElementById('edit-sav-rate').value)||0;
+  const start = document.getElementById('edit-sav-start').value;
+  const maturity = document.getElementById('edit-sav-maturity').value;
+  const owner = document.getElementById('edit-sav-owner').value;
+  const memo = document.getElementById('edit-sav-memo').value.trim();
+
+  if(!name||!amt){alert('상품명과 납입금액을 입력해 주세요');return;}
+  await updateDoc(doc(db,'savings',id), {name,type,cycle,payDay,amt,rate,start,maturity,owner,memo});
+  closeModal('modal-sav-edit');
+};
+
 window.delSaving = async id => { if(confirm('삭제할까요?')) await deleteDoc(doc(db,'savings',id)); };
 
 function calcExpect(sv){
@@ -740,7 +815,10 @@ function renderSavings(){
         <div><div class="sav-name">${sv.name}</div>
           <span class="badge ${sv.type==='예금'?'badge-blue':'badge-green'}">${sv.type}</span>
           <span class="badge" style="margin-left:4px;background:var(--bg2);color:var(--text2)">${sv.owner}</span></div>
-        <button class="del-btn" onclick="delSaving('${sv.id}')">×</button>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button class="del-btn" style="font-size:16px;color:var(--text2)" onclick="openSavEditModal('${sv.id}')">✎</button>
+          <button class="del-btn" onclick="delSaving('${sv.id}')">×</button>
+        </div>
       </div>
       <div class="sav-grid">
         <div class="sav-item"><label>1회 납입액 (${cycleText})</label><span class="teal-text">${fmt(sv.amt)}</span></div>
@@ -774,7 +852,6 @@ window.renderSummary = () => {
   const personalSpent=exps.filter(e=>e.card!=='모임통장').reduce((s,e)=>s+e.amt,0);
   const incTotal=incs.filter(i=>i.type!=='생활비').reduce((s,i)=>s+i.amt,0);
   
-  // 요약 탭에서도 해당 월(ym) 기준 동적 차감
   const savMonthly=savings.reduce((s,sv)=>s+getDeductedSavings(sv, ym),0);
   
   const remain=incTotal-spent-savMonthly;
@@ -839,7 +916,7 @@ await loadCards();
 document.getElementById('loading').style.display='none';
 document.getElementById('app').style.display='block';
 buildMonthOptions();
-changeSavCycle(); // 초기 주기 세팅
+changeSavCycle();
 </script>
 </body>
 </html>
