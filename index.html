@@ -49,8 +49,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .joint-left .val{font-size:22px;font-weight:700;color:var(--amber)}
 .joint-right{text-align:right}
 .joint-row{margin-bottom:4px}
-.joint-row label{font-size:11px;color:var(--text2)}
-.joint-row span{font-size:13px;font-weight:600;color:var(--text);margin-left:6px}
+.joint-row label{font-size:11px;color:var(--amber)}
+.joint-row span{font-size:14px;font-weight:600;color:var(--text);margin-left:6px;display:block;text-align:right;margin-top:2px}
 .form-group{display:flex;flex-direction:column;gap:8px}
 .form-row{display:grid;gap:8px}.form-row.col2{grid-template-columns:1fr 1fr}
 input,select{width:100%;padding:11px 13px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:15px;background:var(--bg2);color:var(--text);outline:none;-webkit-appearance:none;appearance:none}
@@ -147,8 +147,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
   <div class="joint-card">
     <div class="joint-left"><label>생활비 잔액 (모임통장)</label><div class="val" id="book-joint-remain">—</div></div>
     <div class="joint-right">
-      <div class="joint-row"><label>총 각출</label><span id="book-joint-in">—</span></div>
-      <div class="joint-row"><label>지출</label><span class="red-text" id="book-joint-out">0원</span></div>
+      <div class="joint-row"><label>지출</label><span id="book-joint-out">0원</span></div>
     </div>
   </div>
   <div class="segment">
