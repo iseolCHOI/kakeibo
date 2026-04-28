@@ -160,9 +160,8 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
   <div class="hero">
     <div class="hero-label">이번 달 남은 금액 (개인)</div>
     <div class="hero-amount" id="book-remain">—</div>
-    <div class="hero-sub" style="grid-template-columns:1fr 1fr">
+    <div class="hero-sub">
       <div class="hero-item"><div class="hero-item-label">총 수입</div><div class="hero-item-val blue-text" id="book-income">—</div></div>
-      <div class="hero-item"><div class="hero-item-label">생활비 각출</div><div class="hero-item-val" style="color:var(--amber)" id="book-living">0원</div></div>
       <div class="hero-item"><div class="hero-item-label">저축</div><div class="hero-item-val teal-text" id="book-saving">—</div></div>
       <div class="hero-item"><div class="hero-item-label">실소비</div><div class="hero-item-val red-text" id="book-spent">0</div></div>
     </div>
@@ -271,7 +270,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
             <option value="">카테고리</option>
             <option>식비</option><option>교통</option><option>쇼핑</option>
             <option>주거</option><option>의료</option><option>문화/여가</option>
-            <option>용돈</option><option>보험</option><option>기타</option>
+            <option>용돈</option><option>보험</option><option>생활비</option><option>기타</option>
           </select>
         </div>
         <div class="select-wrap"><select id="exp-card"></select></div>
@@ -307,7 +306,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
             <option value="">카테고리</option>
             <option>식비</option><option>교통</option><option>쇼핑</option>
             <option>주거</option><option>의료</option><option>문화/여가</option>
-            <option>용돈</option><option>보험</option><option>기타</option>
+            <option>용돈</option><option>보험</option><option>생활비</option><option>기타</option>
           </select>
         </div>
         <div class="select-wrap"><select id="edit-exp-card"></select></div>
@@ -449,7 +448,8 @@ let expFilter = 'all', cardFilter = 'all';
 
 const CAT_COLORS = {
   '식비':'#1D9E75','교통':'#378ADD','쇼핑':'#D4537E','주거':'#BA7517',
-  '의료':'#7F77DD','문화/여가':'#D85A30','용돈':'#5DCAA5','보험':'#85B7EB','기타':'#888780'
+  '의료':'#7F77DD','문화/여가':'#D85A30','용돈':'#5DCAA5','보험':'#85B7EB',
+  '생활비':'#BA7517','기타':'#888780'
 };
 const fmt = n => Math.round(n).toLocaleString('ko-KR') + '원';
 const today = () => new Date().toISOString().split('T')[0];
