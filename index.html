@@ -127,6 +127,10 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
 .cat-row:last-child{border-bottom:none}
 .cat-color-swatch{width:20px;height:20px;border-radius:50%;flex-shrink:0;border:1px solid var(--border)}
 .cat-color-input{width:44px;height:38px;padding:2px;border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;background:none}
+.drag-handle{font-size:20px;color:var(--text3);cursor:grab;padding:0 6px 0 0;user-select:none;line-height:1;flex-shrink:0}
+.drag-handle:active{cursor:grabbing}
+.cat-row.drag-over{background:var(--blue-bg);border-radius:8px;transition:background .15s}
+.cat-row.dragging{opacity:.35}
 /* 저축 현황 */
 .sav-rate-bar{height:10px;background:var(--bg3);border-radius:5px;overflow:hidden;margin:8px 0 4px}
 .sav-rate-fill{height:100%;border-radius:5px;background:var(--teal);transition:width .4s}
@@ -565,27 +569,107 @@ function updateCategorySelects() {
   document.getElementById('edit-exp-cat').innerHTML = opts;
 }
 
-// 카테고리 관리 모달 목록 렌더링
+
+
+// ── 카테고리 드래그 앤 드롭 ──
+let dragSrc = null; // 드래그 중인 인덱스
+
 function renderCatList() {
   const el = document.getElementById('cat-list');
   if(!categories.length){el.innerHTML='<div class="empty-state">카테고리가 없어요</div>';return;}
   el.innerHTML = categories.map((c,i)=>`
-    <div class="cat-row">
-      <span class="cat-color-swatch" style="background:${c.color}"></span>
-      <span style="flex:1;font-size:14px;font-weight:500">${c.name}</span>
-      <div style="display:flex;flex-direction:column;gap:1px;margin-right:4px">
-        <button onclick="moveCategory(${i},-1)" style="background:none;border:none;cursor:pointer;color:var(--text2);font-size:13px;line-height:1;padding:1px 4px;" ${i===0?'disabled style="opacity:.25;cursor:default"':''}>▲</button>
-        <button onclick="moveCategory(${i},1)"  style="background:none;border:none;cursor:pointer;color:var(--text2);font-size:13px;line-height:1;padding:1px 4px;" ${i===categories.length-1?'disabled style="opacity:.25;cursor:default"':''}>▼</button>
-      </div>
+    <div class="cat-row" data-idx="${i}">
+      <span class="drag-handle">⠿</span>
+      <label style="position:relative;cursor:pointer;flex-shrink:0" title="색상 변경">
+        <span class="cat-color-swatch" id="swatch-${i}" style="background:${c.color};display:block;cursor:pointer;width:24px;height:24px;border-radius:50%;border:2px solid var(--border2)"></span>
+        <input type="color" value="${c.color}" data-cidx="${i}"
+          style="position:absolute;opacity:0;width:0;height:0;pointer-events:none"
+          id="cat-color-${i}" onchange="updateCatColor(${i},this.value)">
+      </label>
+      <span style="flex:1;font-size:14px;font-weight:500;margin-left:4px">${c.name}</span>
       <button class="del-btn" onclick="deleteCategory(${i})" style="font-size:18px">×</button>
     </div>`).join('');
+
+  el.querySelectorAll('.cat-row').forEach(row => {
+    const handle = row.querySelector('.drag-handle');
+
+    // 색상 클릭 시 드래그 시작 방지
+    const colorLabel = row.querySelector('label');
+    if(colorLabel) {
+      colorLabel.addEventListener('mousedown', e => e.stopPropagation());
+      colorLabel.addEventListener('touchstart', e => e.stopPropagation(), {passive:true});
+      colorLabel.addEventListener('click', () => {
+        const input = colorLabel.querySelector('input[type=color]');
+        if(input) input.click();
+      });
+    }
+
+    // ── 데스크탑 드래그 ──
+    row.setAttribute('draggable', 'true');
+    row.addEventListener('dragstart', e => {
+      dragSrc = parseInt(row.dataset.idx);
+      e.dataTransfer.effectAllowed = 'move';
+      setTimeout(() => row.classList.add('dragging'), 0);
+    });
+    row.addEventListener('dragend', () => {
+      row.classList.remove('dragging');
+      el.querySelectorAll('.cat-row').forEach(r => r.classList.remove('drag-over'));
+      dragSrc = null;
+    });
+    row.addEventListener('dragover', e => {
+      e.preventDefault();
+      el.querySelectorAll('.cat-row').forEach(r => r.classList.remove('drag-over'));
+      if(dragSrc !== null && parseInt(row.dataset.idx) !== dragSrc)
+        row.classList.add('drag-over');
+    });
+    row.addEventListener('drop', async e => {
+      e.preventDefault();
+      const toIdx = parseInt(row.dataset.idx);
+      if(dragSrc === null || dragSrc === toIdx) return;
+      const [item] = categories.splice(dragSrc, 1);
+      categories.splice(toIdx, 0, item);
+      await saveCategories();
+    });
+
+    // ── 모바일 터치 드래그 (핸들 기준) ──
+    handle.addEventListener('touchstart', e => {
+      dragSrc = parseInt(row.dataset.idx);
+      row.classList.add('dragging');
+    }, {passive: true});
+
+    handle.addEventListener('touchmove', e => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const target = document.elementFromPoint(touch.clientX, touch.clientY);
+      const targetRow = target?.closest('.cat-row');
+      el.querySelectorAll('.cat-row').forEach(r => r.classList.remove('drag-over'));
+      if(targetRow && targetRow !== row) targetRow.classList.add('drag-over');
+    }, {passive: false});
+
+    handle.addEventListener('touchend', async e => {
+      row.classList.remove('dragging');
+      el.querySelectorAll('.cat-row').forEach(r => r.classList.remove('drag-over'));
+      const touch = e.changedTouches[0];
+      const target = document.elementFromPoint(touch.clientX, touch.clientY);
+      const targetRow = target?.closest('.cat-row');
+      if(targetRow) {
+        const toIdx = parseInt(targetRow.dataset.idx);
+        if(!isNaN(toIdx) && toIdx !== dragSrc) {
+          const [item] = categories.splice(dragSrc, 1);
+          categories.splice(toIdx, 0, item);
+          await saveCategories();
+        }
+      }
+      dragSrc = null;
+    });
+  });
 }
 
-window.moveCategory = async (idx, dir) => {
-  const newIdx = idx + dir;
-  if(newIdx < 0 || newIdx >= categories.length) return;
-  // 두 항목 위치 교환
-  [categories[idx], categories[newIdx]] = [categories[newIdx], categories[idx]];
+window.updateCatColor = async (idx, color) => {
+  categories[idx].color = color;
+  // 스와치 즉시 반영 (저장 전에도 보이도록)
+  const swatch = document.getElementById('swatch-'+idx);
+  if(swatch) swatch.style.background = color;
   await saveCategories();
 };
 
