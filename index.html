@@ -552,6 +552,10 @@ async function loadCategories() {
   categories = snap.exists() ? snap.data().list : [...DEFAULT_CATS];
   updateCategorySelects();
   renderCatList();
+  // ★ 카테고리 로드 완료 후 색상이 반영되도록 전체 재렌더링
+  renderExpenses();
+  renderCardPerf();
+  if(document.getElementById('page-summary').classList.contains('on')) renderSummary();
 }
 async function saveCategories() {
   await setDoc(doc(db,'settings','categories'), {list: categories});
