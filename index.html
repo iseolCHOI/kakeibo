@@ -557,7 +557,10 @@ async function saveCategories() {
   await setDoc(doc(db,'settings','categories'), {list: categories});
   updateCategorySelects();
   renderCatList();
-  // 요약 탭도 열려있으면 갱신
+  // 색상 변경이 반영되도록 관련 화면 전체 갱신
+  renderExpenses();
+  renderCardPerf();
+  renderSavings();
   if(document.getElementById('page-summary').classList.contains('on')) renderSummary();
 }
 
