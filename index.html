@@ -573,9 +573,21 @@ function renderCatList() {
     <div class="cat-row">
       <span class="cat-color-swatch" style="background:${c.color}"></span>
       <span style="flex:1;font-size:14px;font-weight:500">${c.name}</span>
+      <div style="display:flex;flex-direction:column;gap:1px;margin-right:4px">
+        <button onclick="moveCategory(${i},-1)" style="background:none;border:none;cursor:pointer;color:var(--text2);font-size:13px;line-height:1;padding:1px 4px;" ${i===0?'disabled style="opacity:.25;cursor:default"':''}>▲</button>
+        <button onclick="moveCategory(${i},1)"  style="background:none;border:none;cursor:pointer;color:var(--text2);font-size:13px;line-height:1;padding:1px 4px;" ${i===categories.length-1?'disabled style="opacity:.25;cursor:default"':''}>▼</button>
+      </div>
       <button class="del-btn" onclick="deleteCategory(${i})" style="font-size:18px">×</button>
     </div>`).join('');
 }
+
+window.moveCategory = async (idx, dir) => {
+  const newIdx = idx + dir;
+  if(newIdx < 0 || newIdx >= categories.length) return;
+  // 두 항목 위치 교환
+  [categories[idx], categories[newIdx]] = [categories[newIdx], categories[idx]];
+  await saveCategories();
+};
 
 window.addCategory = async () => {
   const name  = document.getElementById('new-cat-name').value.trim();
