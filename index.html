@@ -35,6 +35,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .page-header{padding:16px 16px 0;display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
 .page-title{font-size:20px;font-weight:600}
 .header-btn{padding:6px 12px;border-radius:20px;border:1px solid var(--border2);background:var(--bg2);font-size:13px;color:var(--text);cursor:pointer}
+.header-btns{display:flex;gap:8px}
 .card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:16px;margin:12px 16px 0;box-shadow:var(--shadow)}
 .card-title{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:12px;letter-spacing:.5px}
 .hero{background:var(--bg2);border-radius:var(--radius);margin:12px 16px 0;padding:20px}
@@ -120,6 +121,17 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
 .tag-bill{background:var(--green-bg);color:var(--teal)}
 .tag-joint{background:var(--amber-bg);color:var(--amber)}
 .card-hint{font-size:12px;color:var(--purple);background:#f0eeff;padding:10px 12px;border-radius:8px;line-height:1.6}
+/* 카테고리 관리 */
+.cat-manage-btn{font-size:12px;color:var(--blue);background:none;border:none;cursor:pointer;padding:2px 0;text-align:left;text-decoration:underline}
+.cat-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--border)}
+.cat-row:last-child{border-bottom:none}
+.cat-color-swatch{width:20px;height:20px;border-radius:50%;flex-shrink:0;border:1px solid var(--border)}
+.cat-color-input{width:44px;height:38px;padding:2px;border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;background:none}
+/* 저축 현황 */
+.sav-rate-bar{height:10px;background:var(--bg3);border-radius:5px;overflow:hidden;margin:8px 0 4px}
+.sav-rate-fill{height:100%;border-radius:5px;background:var(--teal);transition:width .4s}
+.sav-summary-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--border)}
+.sav-summary-row:last-child{border-bottom:none}
 </style>
 </head>
 <body>
@@ -144,10 +156,12 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
   </button>
 </nav>
 
-<!-- ── 가계부 ── -->
+<!-- 가계부 -->
 <div class="page on" id="page-book">
-  <div class="page-header"><span class="page-title">가계부</span><button class="header-btn" onclick="openModal('modal-exp')">+ 지출 추가</button></div>
-
+  <div class="page-header">
+    <span class="page-title">가계부</span>
+    <button class="header-btn" onclick="openModal('modal-exp')">+ 지출 추가</button>
+  </div>
   <div class="hero">
     <div class="hero-label">이번 달 남은 금액 (개인)</div>
     <div class="hero-amount" id="book-remain">—</div>
@@ -158,8 +172,6 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
       <div class="hero-item"><div class="hero-item-label">카드결제 납부</div><div class="hero-item-val red-text" id="book-bill-spent">0원</div></div>
     </div>
   </div>
-
-  <!-- 카드 청구 예정 배너 (카드 사용이 있을 때만 표시) -->
   <div class="pending-banner" id="pending-banner" style="display:none">
     <div>
       <div class="pending-banner-label">💳 이번달 카드 사용액 (다음달 청구 예정)</div>
@@ -170,7 +182,6 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
       <div class="pending-banner-sub-val" id="book-real-avail">—</div>
     </div>
   </div>
-
   <div class="joint-card">
     <div class="joint-left"><label>생활비 잔액 (모임통장)</label><div class="val" id="book-joint-remain">—</div></div>
     <div class="joint-right">
@@ -185,7 +196,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
   <div id="exp-list"></div>
 </div>
 
-<!-- ── 수입 ── -->
+<!-- 수입 -->
 <div class="page" id="page-income">
   <div class="page-header"><span class="page-title">수입</span><button class="header-btn" onclick="openModal('modal-income')">+ 추가</button></div>
   <div class="summary-stats">
@@ -198,7 +209,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
   <div class="card" style="padding:0 16px"><div id="income-list-상훈"></div></div>
 </div>
 
-<!-- ── 카드 ── -->
+<!-- 카드 -->
 <div class="page" id="page-card">
   <div class="page-header"><span class="page-title">카드 실적</span><button class="header-btn" onclick="openModal('modal-card-add')">+ 카드 추가</button></div>
   <div class="segment">
@@ -209,7 +220,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
   <div id="card-perf-list"></div>
 </div>
 
-<!-- ── 예적금 ── -->
+<!-- 예적금 -->
 <div class="page" id="page-saving">
   <div class="page-header"><span class="page-title">예적금</span><button class="header-btn" onclick="openModal('modal-saving')">+ 추가</button></div>
   <div class="summary-stats">
@@ -219,7 +230,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
   <div id="sav-list"></div>
 </div>
 
-<!-- ── 요약 ── -->
+<!-- 요약 -->
 <div class="page" id="page-summary">
   <div class="page-header">
     <span class="page-title">월별 요약</span>
@@ -246,6 +257,23 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
       </div>
     </div>
   </div>
+  <!-- ★ 저축 현황 -->
+  <div class="card">
+    <div class="card-title">저축 현황</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:4px">
+      <div>
+        <div style="font-size:12px;color:var(--text2)">납입 완료</div>
+        <div style="font-size:20px;font-weight:700;color:var(--teal)" id="sum-sav-amt">0원</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:12px;color:var(--text2)">수입 대비 저축률</div>
+        <div style="font-size:24px;font-weight:700;color:var(--teal)" id="sum-sav-rate">—</div>
+      </div>
+    </div>
+    <div class="sav-rate-bar"><div class="sav-rate-fill" id="sum-sav-bar" style="width:0%"></div></div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:12px" id="sum-sav-bar-label"></div>
+    <div id="sum-sav-detail"></div>
+  </div>
   <div class="card"><div class="card-title">카테고리별 지출 (카드 포함 전체)</div><div id="sum-cat-list"></div></div>
   <div class="card"><div class="card-title">평균 대비 이번 달</div><div id="sum-avg-compare"><div class="empty-state">2개월 이상 데이터가 쌓이면 표시돼요</div></div></div>
 </div>
@@ -263,13 +291,11 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
       </div>
       <input type="date" id="exp-date">
       <div class="form-row col2">
-        <div class="sel-wrap"><select id="exp-cat">
-          <option value="">카테고리</option>
-          <option>식비</option><option>교통</option><option>쇼핑</option><option>주거</option>
-          <option>의료</option><option>문화/여가</option><option>용돈</option><option>보험</option>
-          <option>카드결제</option>
-          <option>기타</option>
-        </select></div>
+        <div>
+          <div class="sel-wrap"><select id="exp-cat"></select></div>
+          <!-- ★ 카테고리 관리 버튼 -->
+          <button class="cat-manage-btn" onclick="openModal('modal-cat')">⚙ 카테고리 관리</button>
+        </div>
         <div class="sel-wrap"><select id="exp-card"></select></div>
       </div>
       <div class="sel-wrap"><select id="exp-person"><option value="이설">이설</option><option value="상훈">상훈</option><option value="공동">공동</option></select></div>
@@ -296,19 +322,30 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
       </div>
       <input type="date" id="edit-exp-date">
       <div class="form-row col2">
-        <div class="sel-wrap"><select id="edit-exp-cat">
-          <option value="">카테고리</option>
-          <option>식비</option><option>교통</option><option>쇼핑</option><option>주거</option>
-          <option>의료</option><option>문화/여가</option><option>용돈</option><option>보험</option>
-          <option>카드결제</option>
-          <option>기타</option>
-        </select></div>
+        <div class="sel-wrap"><select id="edit-exp-cat"></select></div>
         <div class="sel-wrap"><select id="edit-exp-card"></select></div>
       </div>
       <div class="sel-wrap"><select id="edit-exp-person"><option value="이설">이설</option><option value="상훈">상훈</option><option value="공동">공동</option></select></div>
       <input type="text" id="edit-exp-memo" placeholder="메모 (선택)">
       <button class="submit-btn" onclick="updateExp()">수정 완료</button>
     </div>
+  </div>
+</div>
+
+<!-- ★ 카테고리 관리 모달 -->
+<div class="modal-backdrop" id="modal-cat" onclick="closeModalOutside(event,'modal-cat')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">카테고리 관리</div>
+    <!-- 추가 폼 -->
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px">
+      <input type="color" id="new-cat-color" value="#378ADD" style="width:44px;height:44px;padding:2px;border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;flex-shrink:0">
+      <input type="text" id="new-cat-name" placeholder="카테고리 이름" style="flex:1">
+      <button onclick="addCategory()" style="padding:11px 16px;border-radius:var(--radius-sm);border:none;background:var(--blue);color:#fff;font-size:14px;font-weight:600;cursor:pointer;flex-shrink:0">추가</button>
+    </div>
+    <!-- 목록 -->
+    <div id="cat-list"></div>
+    <div style="font-size:12px;color:var(--text3);margin-top:12px">※ 삭제해도 기존 지출 내역에는 카테고리명이 유지돼요.</div>
   </div>
 </div>
 
@@ -383,8 +420,8 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
         <input type="number" id="sav-rate" placeholder="이율 (%)" step="0.01" inputmode="decimal">
       </div>
       <div class="form-row col2">
-        <input type="date" id="sav-start" placeholder="시작일">
-        <input type="date" id="sav-maturity" placeholder="만기일">
+        <input type="date" id="sav-start">
+        <input type="date" id="sav-maturity">
       </div>
       <div class="sel-wrap"><select id="sav-owner"><option>이설</option><option>상훈</option><option>공동</option></select></div>
       <input type="text" id="sav-memo" placeholder="메모 (선택)">
@@ -413,8 +450,8 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
         <input type="number" id="edit-sav-rate" placeholder="이율 (%)" step="0.01" inputmode="decimal">
       </div>
       <div class="form-row col2">
-        <input type="date" id="edit-sav-start" placeholder="시작일">
-        <input type="date" id="edit-sav-maturity" placeholder="만기일">
+        <input type="date" id="edit-sav-start">
+        <input type="date" id="edit-sav-maturity">
       </div>
       <div class="sel-wrap"><select id="edit-sav-owner"><option>이설</option><option>상훈</option><option>공동</option></select></div>
       <input type="text" id="edit-sav-memo" placeholder="메모 (선택)">
@@ -439,92 +476,161 @@ const firebaseConfig = {
   appId: "1:308269701257:web:7ad31e464f07986ae40e58"
 };
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const db  = getFirestore(app);
 
-const CAT_COLORS = {
-  '식비':'#1D9E75','교통':'#378ADD','쇼핑':'#D4537E','주거':'#BA7517',
-  '의료':'#7F77DD','문화/여가':'#D85A30','용돈':'#5DCAA5','보험':'#85B7EB',
-  '카드결제':'#0F6E56','생활비':'#E07A20','기타':'#888780'
-};
-const fmt = n => Math.round(n).toLocaleString('ko-KR')+'원';
+// ── 기본 카테고리 (최초 1회, Firebase에 저장) ──
+const DEFAULT_CATS = [
+  {name:'식비',     color:'#1D9E75'},
+  {name:'교통',     color:'#378ADD'},
+  {name:'쇼핑',     color:'#D4537E'},
+  {name:'주거',     color:'#BA7517'},
+  {name:'의료',     color:'#7F77DD'},
+  {name:'문화/여가', color:'#D85A30'},
+  {name:'용돈',     color:'#5DCAA5'},
+  {name:'보험',     color:'#85B7EB'},
+  {name:'카드결제',  color:'#0F6E56'},
+  {name:'기타',     color:'#888780'},
+];
+
+const fmt    = n => Math.round(n).toLocaleString('ko-KR')+'원';
 const toDate = () => new Date().toISOString().split('T')[0];
-const nowYM = () => new Date().toISOString().slice(0,7);
+const nowYM  = () => new Date().toISOString().slice(0,7);
 
 let expenses=[], incomes=[], savings=[], cards=[];
+let categories = [...DEFAULT_CATS]; // 동적 카테고리
 let expFilter='all', cardFilter='all';
 
-// ──────────────────────────────────────────
-// ★ 지출 분류 핵심 헬퍼
-//   현금(cash)  : card==='현금'          → 즉시 잔액 차감
-//   카드(credit): card가 카드 ID          → 잔액 미차감, 카드실적에만 반영
-//   모임통장    : card==='모임통장'        → 생활비 잔액에서 차감
-//
-// 카드결제 납부 항목: 결제수단=현금, 카테고리=카드결제 로 입력
-//   → isCash()=true 로 자동 잔액 차감됨
-// ──────────────────────────────────────────
-const isCash  = e => e.card === '현금';
-const isCredit= e => e.card !== '현금' && e.card !== '모임통장';
-const isJoint = e => e.card === '모임통장';
+// ── 카테고리 색상 조회 헬퍼 ──
+function catColor(name) {
+  return categories.find(c=>c.name===name)?.color || '#888780';
+}
 
-// ── 셀렉트 초기값 ──
+// ── 지출 분류 ──
+const isCash   = e => e.card === '현금';
+const isCredit = e => e.card !== '현금' && e.card !== '모임통장';
+const isJoint  = e => e.card === '모임통장';
+
+// ── 셀렉트 초기 ──
 ['new-card-payday','edit-card-payday'].forEach(id=>{
   const el=document.getElementById(id);
   for(let i=1;i<=31;i++) el.innerHTML+=`<option value="${i}일">${i}일</option>`;
 });
-document.getElementById('exp-date').value=toDate();
-document.getElementById('inc-date').value=toDate();
-document.getElementById('sav-start').value=toDate();
+document.getElementById('exp-date').value  = toDate();
+document.getElementById('inc-date').value  = toDate();
+document.getElementById('sav-start').value = toDate();
 
-// 카드 선택 시 안내 힌트 토글
 document.getElementById('exp-card').addEventListener('change', function(){
   document.getElementById('exp-card-hint').style.display =
     isCredit({card:this.value}) ? 'block' : 'none';
 });
 
-// ── 예적금 주기 셀렉트 ──
+// ── 예적금 주기 ──
 window.changeSavCycle = () => {
   const c=document.getElementById('sav-cycle').value, pd=document.getElementById('sav-payday');
   if(c==='once'){pd.style.display='none';return;}
-  pd.style.display='block';pd.innerHTML='';
-  if(c==='monthly')for(let i=1;i<=31;i++)pd.innerHTML+=`<option value="${i}">${i}일</option>`;
-  else['일','월','화','수','목','금','토'].forEach((d,i)=>pd.innerHTML+=`<option value="${i}">${d}요일</option>`);
+  pd.style.display='block'; pd.innerHTML='';
+  if(c==='monthly') for(let i=1;i<=31;i++) pd.innerHTML+=`<option value="${i}">${i}일</option>`;
+  else ['일','월','화','수','목','금','토'].forEach((d,i)=>pd.innerHTML+=`<option value="${i}">${d}요일</option>`);
 };
 window.changeEditSavCycle = () => {
   const c=document.getElementById('edit-sav-cycle').value, pd=document.getElementById('edit-sav-payday');
   if(c==='once'){pd.style.display='none';return;}
-  pd.style.display='block';pd.innerHTML='';
-  if(c==='monthly')for(let i=1;i<=31;i++)pd.innerHTML+=`<option value="${i}">${i}일</option>`;
-  else['일','월','화','수','목','금','토'].forEach((d,i)=>pd.innerHTML+=`<option value="${i}">${d}요일</option>`);
+  pd.style.display='block'; pd.innerHTML='';
+  if(c==='monthly') for(let i=1;i<=31;i++) pd.innerHTML+=`<option value="${i}">${i}일</option>`;
+  else ['일','월','화','수','목','금','토'].forEach((d,i)=>pd.innerHTML+=`<option value="${i}">${d}요일</option>`);
+};
+
+// ──────────────────────────────────────────
+// ★ 카테고리 Firebase 로드/저장
+// ──────────────────────────────────────────
+async function loadCategories() {
+  const snap = await getDoc(doc(db,'settings','categories'));
+  categories = snap.exists() ? snap.data().list : [...DEFAULT_CATS];
+  updateCategorySelects();
+  renderCatList();
+}
+async function saveCategories() {
+  await setDoc(doc(db,'settings','categories'), {list: categories});
+  updateCategorySelects();
+  renderCatList();
+  // 요약 탭도 열려있으면 갱신
+  if(document.getElementById('page-summary').classList.contains('on')) renderSummary();
+}
+
+// 카테고리 셀렉트 동적 갱신 (지출 추가/수정 모달)
+function updateCategorySelects() {
+  const opts = '<option value="">카테고리</option>'
+    + categories.map(c=>`<option value="${c.name}">${c.name}</option>`).join('');
+  document.getElementById('exp-cat').innerHTML      = opts;
+  document.getElementById('edit-exp-cat').innerHTML = opts;
+}
+
+// 카테고리 관리 모달 목록 렌더링
+function renderCatList() {
+  const el = document.getElementById('cat-list');
+  if(!categories.length){el.innerHTML='<div class="empty-state">카테고리가 없어요</div>';return;}
+  el.innerHTML = categories.map((c,i)=>`
+    <div class="cat-row">
+      <span class="cat-color-swatch" style="background:${c.color}"></span>
+      <span style="flex:1;font-size:14px;font-weight:500">${c.name}</span>
+      <button class="del-btn" onclick="deleteCategory(${i})" style="font-size:18px">×</button>
+    </div>`).join('');
+}
+
+window.addCategory = async () => {
+  const name  = document.getElementById('new-cat-name').value.trim();
+  const color = document.getElementById('new-cat-color').value;
+  if(!name){alert('카테고리 이름을 입력해 주세요');return;}
+  if(categories.find(c=>c.name===name)){alert('이미 존재하는 카테고리예요');return;}
+  categories.push({name, color});
+  await saveCategories();
+  document.getElementById('new-cat-name').value = '';
+};
+
+window.deleteCategory = async idx => {
+  if(!confirm(`'${categories[idx].name}' 카테고리를 삭제할까요?`)) return;
+  categories.splice(idx, 1);
+  await saveCategories();
 };
 
 // ── 저축 차감 계산 ──
-function getDeductedSavings(sv, ym) {
+function getDeductedSavings(sv, ym, fromDate=null) {
   const today=new Date(), curY=today.getFullYear(), curM=today.getMonth()+1, curD=today.getDate();
-  const [y,m]=[parseInt(ym.slice(0,4)),parseInt(ym.slice(5,7))];
+  const y=parseInt(ym.slice(0,4)), m=parseInt(ym.slice(5,7));
   const cycle=sv.cycle||'monthly', payDay=sv.payDay||1;
-  if(sv.start&&sv.start.slice(0,7)>ym)return 0;
-  if(sv.maturity&&sv.maturity.slice(0,7)<ym)return 0;
-  if(cycle==='once'||sv.type==='예금') return sv.start?.slice(0,7)===ym?sv.amt:0;
-  if(cycle==='monthly'){
+  if(sv.start    && sv.start.slice(0,7)    > ym) return 0;
+  if(sv.maturity && sv.maturity.slice(0,7) < ym) return 0;
+  if(cycle==='once'||sv.type==='예금') return sv.start?.slice(0,7)===ym ? sv.amt : 0;
+  const isCurM = (y===curY && m===curM);
+  if(cycle==='monthly') {
     const pDay=parseInt(payDay);
-    if(y>curY||(y===curY&&m>curM))return 0;
-    if(y<curY||(y===curY&&m<curM))return sv.amt;
-    return curD>=pDay?sv.amt:0;
+    if(y>curY||(y===curY&&m>curM)) return 0;
+    if(y<curY||(y===curY&&m<curM)) return sv.amt;
+    return curD>=pDay ? sv.amt : 0;
   }
-  if(cycle==='weekly'){
+  if(cycle==='weekly') {
     const wDay=parseInt(payDay); let count=0;
-    for(let d=1;d<=new Date(y,m,0).getDate();d++){
-      if(new Date(y,m-1,d).getDay()===wDay){
-        if(y>curY||(y===curY&&m>curM))continue;
-        if(y<curY||(y===curY&&m<curM)||d<=curD){
-          const ds=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-          if((!sv.start||ds>=sv.start)&&(!sv.maturity||ds<=sv.maturity))count++;
-        }
-      }
+    const anchor = (isCurM && fromDate) ? new Date(fromDate) : null;
+    for(let d=1; d<=new Date(y,m,0).getDate(); d++) {
+      const dateObj=new Date(y,m-1,d);
+      if(dateObj.getDay()!==wDay) continue;
+      if(y>curY||(y===curY&&m>curM)) continue;
+      if(y===curY&&m===curM&&d>curD) continue;
+      const ds=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      if(sv.start    && ds<sv.start)    continue;
+      if(sv.maturity && ds>sv.maturity) continue;
+      if(anchor && dateObj<anchor)      continue;
+      count++;
     }
     return sv.amt*count;
   }
   return 0;
+}
+
+function getLatestIncomeDate(ym) {
+  return incomes
+    .filter(i=>i.date?.startsWith(ym)&&i.type!=='생활비')
+    .sort((a,b)=>b.date.localeCompare(a.date))[0]?.date || null;
 }
 
 // ── 페이지 ──
@@ -533,24 +639,25 @@ window.showPage = id => {
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
   document.getElementById('page-'+id).classList.add('on');
   document.getElementById('nav-'+id).classList.add('on');
-  if(id==='summary')renderSummary();
-  if(id==='card')renderCardPerf();
-  if(id==='saving')renderSavings();
+  if(id==='summary') renderSummary();
+  if(id==='card')    renderCardPerf();
+  if(id==='saving')  renderSavings();
 };
 
 // ── 모달 ──
-window.openModal = id=>{
+window.openModal = id => {
   document.getElementById(id).classList.add('open');
-  if(id==='modal-saving')changeSavCycle();
+  if(id==='modal-saving') changeSavCycle();
+  if(id==='modal-cat')    renderCatList();
 };
-window.closeModal = id=>document.getElementById(id).classList.remove('open');
-window.closeModalOutside = (e,id)=>{ if(e.target===document.getElementById(id))closeModal(id); };
+window.closeModal = id => document.getElementById(id).classList.remove('open');
+window.closeModalOutside = (e,id) => { if(e.target===document.getElementById(id)) closeModal(id); };
 
-function updateCardSelects(){
-  const opts='<option value="현금">현금</option><option value="모임통장">모임통장</option>'
-    +cards.map(c=>`<option value="${c.id}">${c.owner}_${c.name}</option>`).join('');
-  document.getElementById('exp-card').innerHTML=opts;
-  document.getElementById('edit-exp-card').innerHTML=opts;
+function updateCardSelects() {
+  const opts = '<option value="현금">현금</option><option value="모임통장">모임통장</option>'
+    + cards.map(c=>`<option value="${c.id}">${c.owner}_${c.name}</option>`).join('');
+  document.getElementById('exp-card').innerHTML      = opts;
+  document.getElementById('edit-exp-card').innerHTML = opts;
 }
 
 // ── 지출 CRUD ──
@@ -568,12 +675,11 @@ window.addExp = async () => {
   document.getElementById('exp-card-hint').style.display='none';
   closeModal('modal-exp');
 };
-window.delExp = async id=>{ if(confirm('삭제할까요?'))await deleteDoc(doc(db,'expenses',id)); };
+window.delExp = async id => { if(confirm('삭제할까요?')) await deleteDoc(doc(db,'expenses',id)); };
 window.openEditModal = id => {
-  const e=expenses.find(e=>e.id===id);if(!e)return;
+  const e=expenses.find(e=>e.id===id); if(!e) return;
   ['id','name','amt','date','cat','card','person','memo'].forEach(k=>{
-    const el=document.getElementById('edit-exp-'+k);
-    if(el)el.value=e[k]||'';
+    const el=document.getElementById('edit-exp-'+k); if(el) el.value=e[k]||'';
   });
   openModal('modal-exp-edit');
 };
@@ -590,79 +696,61 @@ window.updateExp = async () => {
   await updateDoc(doc(db,'expenses',id),{name,amt,date,cat,card,person,memo});
   closeModal('modal-exp-edit');
 };
-window.filterExp = (v,btn)=>{
+window.filterExp = (v,btn) => {
   expFilter=v;
   document.querySelectorAll('#page-book .seg-btn').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-  renderExpenses();
+  btn.classList.add('on'); renderExpenses();
 };
 
 // ── 지출 렌더링 ──
-function renderExpenses(){
-  const ym=nowYM();
-  const thisM = e=>e.date?.startsWith(ym);
+function renderExpenses() {
+  const ym=nowYM(), thisM=e=>e.date?.startsWith(ym);
+  const livingIn    =incomes.filter(i=>thisM(i)&&i.type==='생활비').reduce((s,i)=>s+i.amt,0);
+  const personalInc =incomes.filter(i=>thisM(i)&&i.type!=='생활비').reduce((s,i)=>s+i.amt,0);
+  const cashSpent   =expenses.filter(e=>thisM(e)&&isCash(e)).reduce((s,e)=>s+e.amt,0);
+  const creditPending=expenses.filter(e=>thisM(e)&&isCredit(e)).reduce((s,e)=>s+e.amt,0);
+  const jointSpent  =expenses.filter(e=>thisM(e)&&isJoint(e)).reduce((s,e)=>s+e.amt,0);
+  const billSpent   =expenses.filter(e=>thisM(e)&&isCash(e)&&e.cat==='카드결제').reduce((s,e)=>s+e.amt,0);
+  const latestInc   =getLatestIncomeDate(ym);
+  const savTotal    =savings.reduce((s,sv)=>s+getDeductedSavings(sv,ym,latestInc),0);
+  const remain      =personalInc-livingIn-savTotal-cashSpent;
+  const realAvail   =remain-creditPending;
+  const jointRemain =livingIn-jointSpent;
 
-  const livingIn      = incomes.filter(i=>thisM(i)&&i.type==='생활비').reduce((s,i)=>s+i.amt,0);
-  const personalInc   = incomes.filter(i=>thisM(i)&&i.type!=='생활비').reduce((s,i)=>s+i.amt,0);
+  document.getElementById('book-remain').textContent    =personalInc?fmt(remain):'수입을 먼저 입력해 주세요';
+  document.getElementById('book-remain').style.color    =remain<0?'var(--red)':'var(--green)';
+  document.getElementById('book-income').textContent    =fmt(personalInc);
+  document.getElementById('book-saving').textContent    =fmt(savTotal);
+  document.getElementById('book-cash-spent').textContent=fmt(cashSpent-billSpent);
+  document.getElementById('book-bill-spent').textContent=fmt(billSpent);
 
-  // ★ 3분류
-  const cashSpent     = expenses.filter(e=>thisM(e)&&isCash(e)).reduce((s,e)=>s+e.amt,0);   // 현금+카드결제납부 → 차감
-  const creditPending = expenses.filter(e=>thisM(e)&&isCredit(e)).reduce((s,e)=>s+e.amt,0); // 카드 사용 → 미차감
-  const jointSpent    = expenses.filter(e=>thisM(e)&&isJoint(e)).reduce((s,e)=>s+e.amt,0);
-
-  // 현금 중 카드결제 납부 항목 분리 표시용
-  const billSpent     = expenses.filter(e=>thisM(e)&&isCash(e)&&e.cat==='카드결제').reduce((s,e)=>s+e.amt,0);
-  const pureCash      = cashSpent - billSpent;
-
-  const savTotal      = savings.reduce((s,sv)=>s+getDeductedSavings(sv,ym),0);
-  const remain        = personalInc - livingIn - savTotal - cashSpent;
-  const realAvail     = remain - creditPending;
-  const jointRemain   = livingIn - jointSpent;
-
-  // 히어로
-  document.getElementById('book-remain').textContent  = personalInc?fmt(remain):'수입을 먼저 입력해 주세요';
-  document.getElementById('book-remain').style.color  = remain<0?'var(--red)':'var(--green)';
-  document.getElementById('book-income').textContent  = fmt(personalInc);
-  document.getElementById('book-saving').textContent  = fmt(savTotal);
-  document.getElementById('book-cash-spent').textContent = fmt(pureCash);
-  document.getElementById('book-bill-spent').textContent = fmt(billSpent);
-
-  // 카드 청구 예정 배너
   const banner=document.getElementById('pending-banner');
   if(creditPending>0){
     banner.style.display='flex';
     document.getElementById('book-card-pending').textContent=fmt(creditPending);
-    document.getElementById('book-real-avail').textContent=fmt(realAvail);
-  }else{
-    banner.style.display='none';
-  }
+    document.getElementById('book-real-avail').textContent  =fmt(realAvail);
+  }else banner.style.display='none';
 
-  // 모임통장
-  document.getElementById('book-joint-out').textContent    = fmt(jointSpent);
-  document.getElementById('book-joint-remain').textContent = livingIn?fmt(jointRemain):'—';
-  document.getElementById('book-joint-remain').style.color = jointRemain<0?'var(--red)':'var(--amber)';
+  document.getElementById('book-joint-out').textContent    =fmt(jointSpent);
+  document.getElementById('book-joint-remain').textContent =livingIn?fmt(jointRemain):'—';
+  document.getElementById('book-joint-remain').style.color =jointRemain<0?'var(--red)':'var(--amber)';
 
-  // 목록
-  const list=expenses
-    .filter(e=>thisM(e)&&(expFilter==='all'||e.person===expFilter))
+  const list=expenses.filter(e=>thisM(e)&&(expFilter==='all'||e.person===expFilter))
     .sort((a,b)=>(b.date||'').localeCompare(a.date||'')||b.createdAt-a.createdAt);
-
   const el=document.getElementById('exp-list');
   if(!list.length){el.innerHTML='<div class="empty-state">지출 내역이 없어요</div>';return;}
 
-  const getTag = e=>{
-    if(isJoint(e))            return `<span class="deduct-tag tag-joint">모임통장</span>`;
-    if(e.cat==='카드결제')      return `<span class="deduct-tag tag-bill">카드결제 납부 ✓차감</span>`;
-    if(isCash(e))             return `<span class="deduct-tag tag-cash">현금 ✓차감</span>`;
-    if(isCredit(e))           return `<span class="deduct-tag tag-card">💳 다음달 청구</span>`;
+  const getTag=e=>{
+    if(isJoint(e))        return `<span class="deduct-tag tag-joint">모임통장</span>`;
+    if(e.cat==='카드결제') return `<span class="deduct-tag tag-bill">카드결제 납부 ✓차감</span>`;
+    if(isCash(e))         return `<span class="deduct-tag tag-cash">현금 ✓차감</span>`;
+    if(isCredit(e))       return `<span class="deduct-tag tag-card">💳 다음달 청구</span>`;
     return '';
   };
-
-  el.innerHTML='<div class="card" style="padding:0 16px">'
-    +list.map(e=>`
+  el.innerHTML='<div class="card" style="padding:0 16px">'+list.map(e=>`
     <div class="list-item">
       <div class="item-left">
-        <span class="item-dot" style="background:${CAT_COLORS[e.cat]||'#888'}"></span>
+        <span class="item-dot" style="background:${catColor(e.cat)}"></span>
         <div class="item-info">
           <div class="item-name">${e.name}${e.memo?' · '+e.memo:''}</div>
           <div class="item-sub">${e.date} · ${e.cat} · ${e.person} ${getTag(e)}</div>
@@ -691,14 +779,12 @@ window.addIncome = async () => {
   ['inc-name','inc-amt','inc-memo'].forEach(id=>document.getElementById(id).value='');
   closeModal('modal-income');
 };
-window.delIncome = async id=>{ if(confirm('삭제할까요?'))await deleteDoc(doc(db,'incomes',id)); };
+window.delIncome = async id => { if(confirm('삭제할까요?')) await deleteDoc(doc(db,'incomes',id)); };
 
-function renderIncomes(){
+function renderIncomes() {
   const ym=nowYM(), list=incomes.filter(i=>i.date?.startsWith(ym));
-  const total=list.filter(i=>i.type!=='생활비').reduce((s,i)=>s+i.amt,0);
-  const extra=list.filter(i=>i.type!=='급여'&&i.type!=='생활비').reduce((s,i)=>s+i.amt,0);
-  document.getElementById('income-total').textContent=fmt(total);
-  document.getElementById('income-extra').textContent=fmt(extra);
+  document.getElementById('income-total').textContent=fmt(list.filter(i=>i.type!=='생활비').reduce((s,i)=>s+i.amt,0));
+  document.getElementById('income-extra').textContent=fmt(list.filter(i=>i.type!=='급여'&&i.type!=='생활비').reduce((s,i)=>s+i.amt,0));
   ['이설','상훈'].forEach(p=>{
     const pList=list.filter(i=>i.person===p||i.person==='공동').sort((a,b)=>(b.date||'').localeCompare(a.date||'')||b.createdAt-a.createdAt);
     const el=document.getElementById('income-list-'+p);
@@ -718,7 +804,7 @@ function renderIncomes(){
 }
 
 // ── 카드 ──
-async function loadCards(){
+async function loadCards() {
   const snap=await getDoc(doc(db,'settings','cards'));
   cards=snap.exists()?snap.data().list:[
     {id:'이설_삼성카드',owner:'이설',name:'삼성카드',payDay:'13일',target:0},
@@ -727,11 +813,11 @@ async function loadCards(){
     {id:'상훈_롯데카드',owner:'상훈',name:'롯데카드',payDay:'14일',target:0},
     {id:'상훈_현대카드',owner:'상훈',name:'현대카드',payDay:'12일',target:0},
   ];
-  updateCardSelects();renderCardPerf();
+  updateCardSelects(); renderCardPerf();
 }
-async function saveCards(){
+async function saveCards() {
   await setDoc(doc(db,'settings','cards'),{list:cards});
-  updateCardSelects();renderCardPerf();
+  updateCardSelects(); renderCardPerf();
 }
 window.addCard = async () => {
   const name=document.getElementById('new-card-name').value.trim();
@@ -745,13 +831,10 @@ window.addCard = async () => {
   ['new-card-name','new-card-target'].forEach(id=>document.getElementById(id).value='');
   closeModal('modal-card-add');
 };
-window.delCard = async id=>{
-  if(!confirm('카드를 삭제할까요?'))return;
-  cards=cards.filter(c=>c.id!==id);await saveCards();
-};
-window.openCardEditModal = id=>{
-  const c=cards.find(c=>c.id===id);if(!c)return;
-  document.getElementById('edit-card-id').value=id;
+window.delCard = async id => { if(!confirm('카드를 삭제할까요?'))return; cards=cards.filter(c=>c.id!==id); await saveCards(); };
+window.openCardEditModal = id => {
+  const c=cards.find(c=>c.id===id); if(!c) return;
+  document.getElementById('edit-card-id').value    =id;
   document.getElementById('edit-card-target').value=c.target||'';
   document.getElementById('edit-card-payday').value=c.payDay||'';
   openModal('modal-card-edit');
@@ -762,19 +845,18 @@ window.updateCard = async () => {
   const payDay=document.getElementById('edit-card-payday').value;
   const c=cards.find(c=>c.id===id);
   if(c){c.target=target;c.payDay=payDay;}
-  await saveCards();closeModal('modal-card-edit');
+  await saveCards(); closeModal('modal-card-edit');
 };
-window.filterCard = (v,btn)=>{
+window.filterCard = (v,btn) => {
   cardFilter=v;
   document.querySelectorAll('#page-card .seg-btn').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');renderCardPerf();
+  btn.classList.add('on'); renderCardPerf();
 };
-function renderCardPerf(){
+function renderCardPerf() {
   const ym=nowYM(), filtered=cards.filter(c=>cardFilter==='all'||c.owner===cardFilter);
   const el=document.getElementById('card-perf-list');
   if(!filtered.length){el.innerHTML='<div class="empty-state">등록된 카드가 없어요</div>';return;}
   el.innerHTML=filtered.map(c=>{
-    // ★ 카드 실적 = 해당 카드로 실제 긁은 금액 (card===c.id)
     const used=expenses.filter(e=>e.date?.startsWith(ym)&&e.card===c.id).reduce((s,e)=>s+e.amt,0);
     const pct=c.target?Math.min(100,Math.round(used/c.target*100)):0;
     const need=c.target?Math.max(0,c.target-used):0;
@@ -815,20 +897,20 @@ window.addSaving = async () => {
   document.getElementById('sav-start').value=toDate();
   closeModal('modal-saving');
 };
-window.openSavEditModal = id=>{
-  const sv=savings.find(s=>s.id===id);if(!sv)return;
-  document.getElementById('edit-sav-id').value=id;
-  document.getElementById('edit-sav-name').value=sv.name;
-  document.getElementById('edit-sav-type').value=sv.type;
-  document.getElementById('edit-sav-cycle').value=sv.cycle||'monthly';
+window.openSavEditModal = id => {
+  const sv=savings.find(s=>s.id===id); if(!sv) return;
+  document.getElementById('edit-sav-id').value      =id;
+  document.getElementById('edit-sav-name').value    =sv.name;
+  document.getElementById('edit-sav-type').value    =sv.type;
+  document.getElementById('edit-sav-cycle').value   =sv.cycle||'monthly';
   changeEditSavCycle();
-  if(sv.cycle!=='once')document.getElementById('edit-sav-payday').value=sv.payDay||(sv.cycle==='weekly'?0:1);
-  document.getElementById('edit-sav-amt').value=sv.amt;
-  document.getElementById('edit-sav-rate').value=sv.rate||'';
-  document.getElementById('edit-sav-start').value=sv.start||'';
+  if(sv.cycle!=='once') document.getElementById('edit-sav-payday').value=sv.payDay||(sv.cycle==='weekly'?0:1);
+  document.getElementById('edit-sav-amt').value     =sv.amt;
+  document.getElementById('edit-sav-rate').value    =sv.rate||'';
+  document.getElementById('edit-sav-start').value   =sv.start||'';
   document.getElementById('edit-sav-maturity').value=sv.maturity||'';
-  document.getElementById('edit-sav-owner').value=sv.owner;
-  document.getElementById('edit-sav-memo').value=sv.memo||'';
+  document.getElementById('edit-sav-owner').value   =sv.owner;
+  document.getElementById('edit-sav-memo').value    =sv.memo||'';
   openModal('modal-sav-edit');
 };
 window.updateSaving = async () => {
@@ -847,18 +929,18 @@ window.updateSaving = async () => {
   await updateDoc(doc(db,'savings',id),{name,type,cycle,payDay,amt,rate,start,maturity,owner,memo});
   closeModal('modal-sav-edit');
 };
-window.delSaving = async id=>{ if(confirm('삭제할까요?'))await deleteDoc(doc(db,'savings',id)); };
+window.delSaving = async id => { if(confirm('삭제할까요?')) await deleteDoc(doc(db,'savings',id)); };
 
-function calcExpect(sv){
-  if(!sv.maturity||!sv.start||!sv.rate)return null;
+function calcExpect(sv) {
+  if(!sv.maturity||!sv.start||!sv.rate) return null;
   const days=(new Date(sv.maturity)-new Date(sv.start))/(1000*60*60*24);
-  if(days<=0)return sv.amt;
+  if(days<=0) return sv.amt;
   const c=sv.cycle||'monthly';
   if(sv.type==='예금'||c==='once'){const m=days/30.44;return Math.round(sv.amt*(1+(sv.rate/100)*(m/12)));}
   if(c==='weekly'){const w=Math.max(1,Math.round(days/7));return Math.round(sv.amt*w+sv.amt*w*(w+1)/2*(sv.rate/100/52));}
   const m=Math.max(1,Math.round(days/30.44));return Math.round(sv.amt*m+sv.amt*m*(m+1)/2*(sv.rate/100/12));
 }
-function dDay(mat){
+function dDay(mat) {
   if(!mat)return{text:'만기일 미설정',color:'var(--text3)'};
   const d=Math.ceil((new Date(mat)-new Date())/(1000*60*60*24));
   if(d<0)return{text:'만기 완료',color:'var(--green)'};
@@ -867,16 +949,16 @@ function dDay(mat){
   if(d<=90)return{text:'D-'+d,color:'var(--amber)'};
   return{text:'D-'+d,color:'var(--green)'};
 }
-function progPct(s,m){
+function progPct(s,m) {
   if(!s||!m)return 0;
   return Math.min(100,Math.max(0,Math.round((new Date()-new Date(s))/(new Date(m)-new Date(s))*100)));
 }
-function renderSavings(){
-  const ym=nowYM();
-  const monthly=savings.reduce((s,sv)=>s+getDeductedSavings(sv,ym),0);
+function renderSavings() {
+  const ym=nowYM(), latestInc=getLatestIncomeDate(ym);
+  const monthly=savings.reduce((s,sv)=>s+getDeductedSavings(sv,ym,latestInc),0);
   const totalExpect=savings.map(calcExpect).filter(Boolean).reduce((a,b)=>a+b,0);
   document.getElementById('sav-monthly').textContent=fmt(monthly);
-  document.getElementById('sav-expect').textContent=totalExpect?fmt(totalExpect):'—';
+  document.getElementById('sav-expect').textContent =totalExpect?fmt(totalExpect):'—';
   const el=document.getElementById('sav-list');
   if(!savings.length){el.innerHTML='<div class="empty-state">등록된 예적금이 없어요</div>';return;}
   el.innerHTML=savings.map(sv=>{
@@ -910,22 +992,28 @@ function renderSavings(){
 }
 
 // ── 요약 ──
-function buildMonthOptions(){
-  const all=[...new Set([...expenses.map(e=>e.date?.slice(0,7)),...incomes.map(i=>i.date?.slice(0,7)),nowYM()].filter(Boolean))].sort().reverse();
+function buildMonthOptions() {
+  const all=[...new Set([
+    ...expenses.map(e=>e.date?.slice(0,7)),
+    ...incomes.map(i=>i.date?.slice(0,7)),
+    nowYM()
+  ].filter(Boolean))].sort().reverse();
   const sel=document.getElementById('summary-month'), cur=sel.value||nowYM();
   sel.innerHTML=all.map(m=>`<option value="${m}" ${m===cur?'selected':''}>${m}</option>`).join('');
 }
+
 window.renderSummary = () => {
   buildMonthOptions();
-  const ym=document.getElementById('summary-month').value||nowYM();
-  const exps=expenses.filter(e=>e.date?.startsWith(ym));
-  const incs=incomes.filter(i=>i.date?.startsWith(ym));
+  const ym   = document.getElementById('summary-month').value||nowYM();
+  const exps = expenses.filter(e=>e.date?.startsWith(ym));
+  const incs = incomes.filter(i=>i.date?.startsWith(ym));
+  const latestInc = getLatestIncomeDate(ym);
 
   const cashSpent    = exps.filter(e=>isCash(e)).reduce((s,e)=>s+e.amt,0);
   const creditPending= exps.filter(e=>isCredit(e)).reduce((s,e)=>s+e.amt,0);
   const totalForCat  = exps.filter(e=>!isJoint(e)).reduce((s,e)=>s+e.amt,0);
   const incTotal     = incs.filter(i=>i.type!=='생활비').reduce((s,i)=>s+i.amt,0);
-  const savMonthly   = savings.reduce((s,sv)=>s+getDeductedSavings(sv,ym),0);
+  const savMonthly   = savings.reduce((s,sv)=>s+getDeductedSavings(sv,ym,latestInc),0);
   const remain       = incTotal - cashSpent - savMonthly;
   const realAvail    = remain - creditPending;
 
@@ -936,23 +1024,53 @@ window.renderSummary = () => {
   document.getElementById('sum-real-avail').textContent  = incTotal?fmt(realAvail):'—';
   document.getElementById('sum-real-avail').style.color  = realAvail<0?'var(--red)':'var(--green)';
 
+  // ★ 저축 현황
+  const savRate = incTotal ? Math.round(savMonthly/incTotal*100) : 0;
+  document.getElementById('sum-sav-amt').textContent  = fmt(savMonthly);
+  document.getElementById('sum-sav-rate').textContent = incTotal ? savRate+'%' : '—';
+  document.getElementById('sum-sav-bar').style.width  = Math.min(savRate,100)+'%';
+  document.getElementById('sum-sav-bar-label').textContent =
+    incTotal ? `수입 ${fmt(incTotal)} 중 ${fmt(savMonthly)} 저축` : '수입을 입력하면 저축률이 표시돼요';
+
+  // 예적금 항목별 납입액
+  const savDetail = savings.map(sv=>{
+    const deducted = getDeductedSavings(sv, ym, latestInc);
+    if(!deducted) return '';
+    return `<div class="sav-summary-row">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="badge ${sv.type==='예금'?'badge-blue':'badge-green'}">${sv.type}</span>
+        <span style="font-size:14px">${sv.name}</span>
+        <span style="font-size:12px;color:var(--text2)">${sv.owner}</span>
+      </div>
+      <span style="font-size:14px;font-weight:600;color:var(--teal)">${fmt(deducted)}</span>
+    </div>`;
+  }).filter(Boolean).join('');
+  document.getElementById('sum-sav-detail').innerHTML =
+    savDetail || '<div style="font-size:13px;color:var(--text3);padding:8px 0">이번달 납입 항목이 없어요</div>';
+
+  // 평균 대비 배지
   const allMonths=[...new Set(expenses.map(e=>e.date?.slice(0,7)).filter(Boolean))].sort();
   const pastMonths=allMonths.filter(m=>m!==ym);
   if(pastMonths.length>0){
     const pastAvg=Math.round(pastMonths.map(m=>expenses.filter(e=>e.date?.startsWith(m)&&isCash(e)).reduce((s,e)=>s+e.amt,0)).reduce((a,b)=>a+b,0)/pastMonths.length);
     const diff=cashSpent-pastAvg,sign=diff>0?'+':'',col=diff>0?'var(--red)':'var(--green)',bg=diff>0?'var(--red-bg)':'var(--green-bg)';
     document.getElementById('sum-avg-badge').innerHTML=`<span class="badge" style="background:${bg};color:${col}">평균 대비 ${sign}${fmt(Math.abs(diff))}</span>`;
-  }else document.getElementById('sum-avg-badge').innerHTML='';
+  } else document.getElementById('sum-avg-badge').innerHTML='';
 
+  // 카테고리별
   const catMap={};
   exps.filter(e=>!isJoint(e)).forEach(e=>{catMap[e.cat]=(catMap[e.cat]||0)+e.amt;});
   const cats=Object.keys(catMap).sort((a,b)=>catMap[b]-catMap[a]);
-  document.getElementById('sum-cat-list').innerHTML=cats.length?cats.map(c=>`
+  document.getElementById('sum-cat-list').innerHTML = cats.length ? cats.map(c=>`
     <div class="list-item">
-      <div class="item-left"><span class="item-dot" style="background:${CAT_COLORS[c]||'#888'}"></span><span>${c}</span></div>
-      <div class="item-right"><span style="font-weight:600">${fmt(catMap[c])}</span><span style="font-size:12px;color:var(--text2);margin-left:6px">${totalForCat?Math.round(catMap[c]/totalForCat*100):0}%</span></div>
-    </div>`).join(''):'<div class="empty-state">지출 내역이 없어요</div>';
+      <div class="item-left"><span class="item-dot" style="background:${catColor(c)}"></span><span>${c}</span></div>
+      <div class="item-right">
+        <span style="font-weight:600">${fmt(catMap[c])}</span>
+        <span style="font-size:12px;color:var(--text2);margin-left:6px">${totalForCat?Math.round(catMap[c]/totalForCat*100):0}%</span>
+      </div>
+    </div>`).join('') : '<div class="empty-state">지출 내역이 없어요</div>';
 
+  // 평균 대비 차트
   const avgEl=document.getElementById('sum-avg-compare');
   if(pastMonths.length>0){
     const allCats=[...new Set(expenses.map(e=>e.cat))];
@@ -965,15 +1083,15 @@ window.renderSummary = () => {
     avgEl.innerHTML=rows.map(r=>{
       const diff=r.curAmt-r.avg,sign=diff>0?'+':'',col=diff>0?'var(--red)':'var(--green)';
       return `<div class="avg-row">
-        <div class="avg-cat"><span class="item-dot" style="background:${CAT_COLORS[r.cat]||'#888'}"></span>${r.cat}</div>
+        <div class="avg-cat"><span class="item-dot" style="background:${catColor(r.cat)}"></span>${r.cat}</div>
         <div class="avg-bars">
-          <div class="avg-bar-avg" style="width:${Math.round(r.avg/maxVal*100)}%;background:${CAT_COLORS[r.cat]||'#888'}"></div>
-          <div class="avg-bar-cur" style="width:${Math.round(r.curAmt/maxVal*100)}%;background:${CAT_COLORS[r.cat]||'#888'}"></div>
+          <div class="avg-bar-avg" style="width:${Math.round(r.avg/maxVal*100)}%;background:${catColor(r.cat)}"></div>
+          <div class="avg-bar-cur" style="width:${Math.round(r.curAmt/maxVal*100)}%;background:${catColor(r.cat)}"></div>
         </div>
         <div class="avg-diff" style="color:${col}">${sign}${fmt(Math.abs(diff))}</div>
       </div>`;
     }).join('');
-  }else avgEl.innerHTML='<div class="empty-state">2개월 이상 데이터가 쌓이면 표시돼요</div>';
+  } else avgEl.innerHTML='<div class="empty-state">2개월 이상 데이터가 쌓이면 표시돼요</div>';
 };
 
 // ── 초기화 ──
@@ -982,25 +1100,26 @@ const tryShow=()=>{ if(_el&&_il&&_sl){document.getElementById('loading').style.d
 
 onSnapshot(query(collection(db,'expenses'),orderBy('createdAt','desc')),snap=>{
   expenses=snap.docs.map(d=>({id:d.id,...d.data()}));
-  renderExpenses();renderCardPerf();
-  if(document.getElementById('page-summary').classList.contains('on'))renderSummary();
+  renderExpenses(); renderCardPerf();
+  if(document.getElementById('page-summary').classList.contains('on')) renderSummary();
   if(!_el){_el=true;tryShow();}
 });
 onSnapshot(query(collection(db,'incomes'),orderBy('createdAt','desc')),snap=>{
   incomes=snap.docs.map(d=>({id:d.id,...d.data()}));
-  renderIncomes();renderExpenses();
-  if(document.getElementById('page-summary').classList.contains('on'))renderSummary();
+  renderIncomes(); renderExpenses();
+  if(document.getElementById('page-summary').classList.contains('on')) renderSummary();
   if(!_il){_il=true;tryShow();}
 });
 onSnapshot(query(collection(db,'savings'),orderBy('createdAt','desc')),snap=>{
   savings=snap.docs.map(d=>({id:d.id,...d.data()}));
-  renderSavings();renderExpenses();
-  if(document.getElementById('page-summary').classList.contains('on'))renderSummary();
+  renderSavings(); renderExpenses();
+  if(document.getElementById('page-summary').classList.contains('on')) renderSummary();
   if(!_sl){_sl=true;tryShow();}
 });
 
 changeSavCycle();
 loadCards();
+loadCategories();
 </script>
 </body>
 </html>
