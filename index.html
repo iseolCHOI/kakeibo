@@ -180,10 +180,10 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
     <div class="hero-label" id="book-hero-label">이번 달 남은 금액 (전체)</div>
     <div class="hero-amount" id="book-remain">—</div>
     <div class="hero-sub">
-      <div class="hero-item"><div class="hero-item-label">총 수입</div><div class="hero-item-val blue-text" id="book-income">—</div></div>
-      <div class="hero-item"><div class="hero-item-label">저축 (납입완료)</div><div class="hero-item-val teal-text" id="book-saving">0원</div></div>
-      <div class="hero-item"><div class="hero-item-label">현금 지출</div><div class="hero-item-val red-text" id="book-cash-spent">0원</div></div>
-      <div class="hero-item"><div class="hero-item-label">카드결제 납부</div><div class="hero-item-val red-text" id="book-bill-spent">0원</div></div>
+      <div class="hero-item"><div class="hero-item-label" id="book-income-label">총 수입</div><div class="hero-item-val blue-text" id="book-income">—</div></div>
+      <div class="hero-item"><div class="hero-item-label" id="book-saving-label">저축 (납입완료)</div><div class="hero-item-val teal-text" id="book-saving">0원</div></div>
+      <div class="hero-item"><div class="hero-item-label" id="book-cash-label">현금 지출</div><div class="hero-item-val red-text" id="book-cash-spent">0원</div></div>
+      <div class="hero-item"><div class="hero-item-label" id="book-bill-label">카드결제 납부</div><div class="hero-item-val red-text" id="book-bill-spent">0원</div></div>
     </div>
   </div>
   <div class="pending-banner" id="pending-banner" style="display:none">
@@ -214,7 +214,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
   <!-- 기간 필터 -->
   <div style="display:flex;gap:6px;padding:8px 16px 0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none">
     <button class="period-btn on" onclick="setPeriod('thisMonth',this)">이번달</button>
-    <button class="period-btn" onclick="setPeriod('lastMonth',this)">저번달</button>
+    <button class="period-btn" onclick="setPeriod('lastMonth',this)">지난달</button>
     <button class="period-btn" onclick="setPeriod('3months',this)">3개월</button>
     <button class="period-btn" onclick="setPeriod('custom',this)">직접선택</button>
   </div>
@@ -851,17 +851,51 @@ function getDateRange() {
   const today=toDate(), now=new Date();
   if(expPeriod==='thisMonth') return {from:nowYM()+'-01', to:today};
   if(expPeriod==='lastMonth') {
-    const d=new Date(now.getFullYear(),now.getMonth()-1,1);
-    const lym=d.toISOString().slice(0,7);
-    const lastDay=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
-    return {from:lym+'-01', to:lym+'-'+String(lastDay).padStart(2,'0')};
+    // ★ toISOString() 대신 직접 계산 (UTC 시간대 버그 방지)
+    const y = now.getMonth()===0 ? now.getFullYear()-1 : now.getFullYear();
+    const m = now.getMonth()===0 ? 12 : now.getMonth();
+    const lym = `${y}-${String(m).padStart(2,'0')}`;
+    const lastDay = new Date(y, m, 0).getDate();
+    return {from:`${lym}-01`, to:`${lym}-${String(lastDay).padStart(2,'0')}`};
   }
   if(expPeriod==='3months') {
-    const d=new Date(now.getFullYear(),now.getMonth()-2,1);
-    return {from:d.toISOString().slice(0,7)+'-01', to:today};
+    const y = now.getFullYear(), m = now.getMonth(); // 0-indexed
+    const fromM = m-2 <= 0 ? m+10 : m-2;
+    const fromY = m-2 <= 0 ? y-1 : y;
+    return {from:`${fromY}-${String(fromM).padStart(2,'0')}-01`, to:today};
   }
   if(expPeriod==='custom') return {from:expDateFrom||'2000-01-01', to:expDateTo||today};
   return {from:nowYM()+'-01', to:today};
+}
+
+// ★ 이월 잔액 계산 (이번달 이전 전체 누적)
+function getCarryover(p) {
+  const ym = nowYM();
+  const byP      = x => p==='all' ? (x.person==='이설'||x.person==='상훈') : x.person===p;
+  const byPLiving= i => p==='all' ? (i.person==='이설'||i.person==='상훈') : i.person===p;
+  const savByP   = sv=> p==='all' ? (sv.owner==='이설'||sv.owner==='상훈')  : sv.owner===p;
+
+  // 이번달 이전 데이터만
+  const pastInc  = incomes.filter(i=>i.date?.slice(0,7)<ym&&i.type!=='생활비'&&byP(i)).reduce((s,i)=>s+i.amt,0);
+  const pastLiv  = incomes.filter(i=>i.date?.slice(0,7)<ym&&i.type==='생활비'&&byPLiving(i)).reduce((s,i)=>s+i.amt,0);
+  const pastCash = expenses.filter(e=>e.date?.slice(0,7)<ym&&isCash(e)&&byP(e)).reduce((s,e)=>s+e.amt,0);
+
+  // 과거 저축 누적 (각 월별로 계산)
+  const pastMonths=[...new Set(
+    [...incomes,...expenses].map(x=>x.date?.slice(0,7)).filter(m=>m&&m<ym)
+  )];
+  const pastSav = pastMonths.reduce((total,m)=>{
+    return total + savings.filter(savByP).reduce((s,sv)=>s+getDeductedSavings(sv,m,null),0);
+  },0);
+
+  const personalCarryover = pastInc - pastLiv - pastSav - pastCash;
+
+  // 모임통장 이월 (탭 무관 전체 기준)
+  const pastJointIn  = incomes.filter(i=>i.date?.slice(0,7)<ym&&i.type==='생활비').reduce((s,i)=>s+i.amt,0);
+  const pastJointOut = expenses.filter(e=>e.date?.slice(0,7)<ym&&isJoint(e)).reduce((s,e)=>s+e.amt,0);
+  const jointCarryover = pastJointIn - pastJointOut;
+
+  return { personalCarryover, jointCarryover };
 }
 
 window.setPeriod = (period, btn) => {
@@ -870,7 +904,7 @@ window.setPeriod = (period, btn) => {
   btn.classList.add('on');
   document.getElementById('custom-date-range').style.display = period==='custom'?'block':'none';
   expShowDays=7; collapsedDates.clear();
-  renderExpList();
+  renderExpenses(); // ★ 히어로도 함께 갱신
 };
 window.onSearchInput = () => {
   expSearch=document.getElementById('exp-search').value.trim();
@@ -880,7 +914,8 @@ window.onSearchInput = () => {
 window.onDateRangeChange = () => {
   expDateFrom=document.getElementById('exp-date-from').value;
   expDateTo  =document.getElementById('exp-date-to').value;
-  expShowDays=7; renderExpList();
+  expShowDays=7;
+  renderExpenses(); // ★ 히어로도 함께 갱신
 };
 window.toggleDateGroup = date => {
   collapsedDates.has(date) ? collapsedDates.delete(date) : collapsedDates.add(date);
@@ -888,58 +923,124 @@ window.toggleDateGroup = date => {
 };
 window.showMoreDays = () => { expShowDays+=7; renderExpList(); };
 
+// ── 기간 레이블 ──
+function getPeriodLabel() {
+  if(expPeriod==='thisMonth') return '이번 달';
+  if(expPeriod==='lastMonth') return '지난달';
+  if(expPeriod==='3months')   return '최근 3개월';
+  if(expPeriod==='custom') {
+    const from=expDateFrom, to=expDateTo;
+    if(from&&to) return `${from} ~ ${to}`;
+    return '기간 선택';
+  }
+  return '이번 달';
+}
+
 // ── 지출 렌더링 (잔액 계산) ──
 function renderExpenses() {
   const ym=nowYM(), thisM=e=>e.date?.startsWith(ym);
   const p=expFilter; // 'all' | '이설' | '상훈'
 
   // ★ 개인 필터
-  // - 전체 탭: 이설+상훈만 (공동 제외)
-  // - 이설/상훈 탭: 해당 사람만
-  // - 생활비 납입: 이설/상훈 이름으로 등록된 것만 각 탭에서 차감
   const byP      = x => p==='all' ? (x.person==='이설'||x.person==='상훈') : x.person===p;
   const byPLiving= i => p==='all' ? (i.person==='이설'||i.person==='상훈') : i.person===p;
   const savByP   = sv=> p==='all' ? (sv.owner==='이설'||sv.owner==='상훈')  : sv.owner===p;
 
-  // 개인 수입/지출
-  const livingIn     =incomes.filter(i=>thisM(i)&&i.type==='생활비'&&byPLiving(i)).reduce((s,i)=>s+i.amt,0);
-  const personalInc  =incomes.filter(i=>thisM(i)&&i.type!=='생활비'&&byP(i)).reduce((s,i)=>s+i.amt,0);
-  const cashSpent    =expenses.filter(e=>thisM(e)&&isCash(e)&&byP(e)).reduce((s,e)=>s+e.amt,0);
-  const creditPending=expenses.filter(e=>thisM(e)&&isCredit(e)&&byP(e)).reduce((s,e)=>s+e.amt,0);
-  const billSpent    =expenses.filter(e=>thisM(e)&&isCash(e)&&e.cat==='카드결제'&&byP(e)).reduce((s,e)=>s+e.amt,0);
-  const latestInc    =getLatestIncomeDate(ym);
-  const savTotal     =savings.filter(savByP).reduce((s,sv)=>s+getDeductedSavings(sv,ym,latestInc),0);
-  const remain       =personalInc-livingIn-savTotal-cashSpent;
-  const realAvail    =remain-creditPending;
+  if(expPeriod === 'thisMonth') {
+    // ── 이번달: 이월 포함 잔액 계산 ──
+    const livingIn     =incomes.filter(i=>thisM(i)&&i.type==='생활비'&&byPLiving(i)).reduce((s,i)=>s+i.amt,0);
+    const personalInc  =incomes.filter(i=>thisM(i)&&i.type!=='생활비'&&byP(i)).reduce((s,i)=>s+i.amt,0);
+    const cashSpent    =expenses.filter(e=>thisM(e)&&isCash(e)&&byP(e)).reduce((s,e)=>s+e.amt,0);
+    const creditPending=expenses.filter(e=>thisM(e)&&isCredit(e)&&byP(e)).reduce((s,e)=>s+e.amt,0);
+    const billSpent    =expenses.filter(e=>thisM(e)&&isCash(e)&&e.cat==='카드결제'&&byP(e)).reduce((s,e)=>s+e.amt,0);
+    const latestInc    =getLatestIncomeDate(ym);
+    const savTotal     =savings.filter(savByP).reduce((s,sv)=>s+getDeductedSavings(sv,ym,latestInc),0);
+    const { personalCarryover, jointCarryover } = getCarryover(p);
+    const remain    = personalCarryover + personalInc - livingIn - savTotal - cashSpent;
+    const realAvail = remain - creditPending;
+    const jointLivingIn=incomes.filter(i=>thisM(i)&&i.type==='생활비').reduce((s,i)=>s+i.amt,0);
+    const jointSpent   =expenses.filter(e=>thisM(e)&&isJoint(e)).reduce((s,e)=>s+e.amt,0);
+    const jointRemain  = jointCarryover + jointLivingIn - jointSpent;
 
-  // ★ 모임통장: 탭과 무관하게 항상 전체 기준
-  const jointLivingIn=incomes.filter(i=>thisM(i)&&i.type==='생활비').reduce((s,i)=>s+i.amt,0);
-  const jointSpent   =expenses.filter(e=>thisM(e)&&isJoint(e)).reduce((s,e)=>s+e.amt,0);
-  const jointRemain  =jointLivingIn-jointSpent;
+    const personLabel = p==='all' ? '(전체)' : `(${p})`;
+    document.getElementById('book-hero-label').textContent = `이번 달 남은 금액 ${personLabel}`;
+    document.getElementById('book-income-label').textContent = '총 수입';
+    document.getElementById('book-saving-label').textContent = '저축 (납입완료)';
+    document.getElementById('book-cash-label').textContent   = '현금 지출';
+    document.getElementById('book-bill-label').textContent   = '카드결제 납부';
+    document.getElementById('book-joint-label').textContent  = '생활비 잔액 (모임통장)';
 
-  // 히어로 레이블
-  document.getElementById('book-hero-label').textContent =
-    p==='all' ? '이번 달 남은 금액 (전체)' : `${p}의 이번 달 남은 금액`;
-  document.getElementById('book-joint-label').textContent = '생활비 잔액 (모임통장)';
+    document.getElementById('book-remain').textContent    = (personalInc||personalCarryover) ? fmt(remain) : '수입을 먼저 입력해 주세요';
+    document.getElementById('book-remain').style.color    = remain<0 ? 'var(--red)' : 'var(--green)';
+    document.getElementById('book-income').textContent    = personalCarryover
+      ? `${fmt(personalInc)} (+이월 ${fmt(personalCarryover)})`
+      : fmt(personalInc);
+    document.getElementById('book-saving').textContent    = fmt(savTotal);
+    document.getElementById('book-cash-spent').textContent= fmt(cashSpent-billSpent);
+    document.getElementById('book-bill-spent').textContent= fmt(billSpent);
 
-  document.getElementById('book-remain').textContent    =personalInc?fmt(remain):'수입을 먼저 입력해 주세요';
-  document.getElementById('book-remain').style.color    =remain<0?'var(--red)':'var(--green)';
-  document.getElementById('book-income').textContent    =fmt(personalInc);
-  document.getElementById('book-saving').textContent    =fmt(savTotal);
-  document.getElementById('book-cash-spent').textContent=fmt(cashSpent-billSpent);
-  document.getElementById('book-bill-spent').textContent=fmt(billSpent);
+    const banner=document.getElementById('pending-banner');
+    if(creditPending>0){
+      banner.style.display='flex';
+      document.getElementById('book-card-pending').textContent=fmt(creditPending);
+      document.getElementById('book-real-avail').textContent  =fmt(realAvail);
+    } else banner.style.display='none';
 
-  const banner=document.getElementById('pending-banner');
-  if(creditPending>0){
-    banner.style.display='flex';
-    document.getElementById('book-card-pending').textContent=fmt(creditPending);
-    document.getElementById('book-real-avail').textContent  =fmt(realAvail);
-  } else banner.style.display='none';
+    document.getElementById('book-joint-out').textContent    =fmt(jointSpent);
+    document.getElementById('book-joint-remain').textContent =fmt(jointRemain);
+    document.getElementById('book-joint-remain').style.color =jointRemain<0?'var(--red)':'var(--amber)';
 
-  // 모임통장 항상 전체 기준
-  document.getElementById('book-joint-out').textContent    =fmt(jointSpent);
-  document.getElementById('book-joint-remain').textContent =jointLivingIn?fmt(jointRemain):'—';
-  document.getElementById('book-joint-remain').style.color =jointRemain<0?'var(--red)':'var(--amber)';
+  } else {
+    // ── 지난달·3개월·직접선택: 해당 기간 집계 ──
+    const {from, to} = getDateRange();
+    const inRange = x => x.date >= from && x.date <= to;
+
+    const periodInc   =incomes.filter(i=>inRange(i)&&i.type!=='생활비'&&byP(i)).reduce((s,i)=>s+i.amt,0);
+    const periodLiv   =incomes.filter(i=>inRange(i)&&i.type==='생활비'&&byPLiving(i)).reduce((s,i)=>s+i.amt,0);
+    const periodCash  =expenses.filter(e=>inRange(e)&&isCash(e)&&byP(e)).reduce((s,e)=>s+e.amt,0);
+    const periodBill  =expenses.filter(e=>inRange(e)&&isCash(e)&&e.cat==='카드결제'&&byP(e)).reduce((s,e)=>s+e.amt,0);
+    const periodCredit=expenses.filter(e=>inRange(e)&&isCredit(e)&&byP(e)).reduce((s,e)=>s+e.amt,0);
+    const periodJointIn =incomes.filter(i=>inRange(i)&&i.type==='생활비').reduce((s,i)=>s+i.amt,0);
+    const periodJointOut=expenses.filter(e=>inRange(e)&&isJoint(e)).reduce((s,e)=>s+e.amt,0);
+
+    // 기간 내 저축: 해당 기간에 포함된 달들의 납입액 합산
+    const months=[...new Set([
+      ...incomes.filter(i=>inRange(i)).map(i=>i.date?.slice(0,7)),
+      ...expenses.filter(e=>inRange(e)).map(e=>e.date?.slice(0,7))
+    ].filter(Boolean))];
+    const periodSav = months.reduce((total,m)=>{
+      return total + savings.filter(savByP).reduce((s,sv)=>s+getDeductedSavings(sv,m,null),0);
+    },0);
+
+    const periodNet = periodInc - periodLiv - periodSav - periodCash;
+    const label = getPeriodLabel();
+    const personLabel = p==='all' ? '(전체)' : `(${p})`;
+
+    document.getElementById('book-hero-label').textContent = `${label} 수지 ${personLabel}`;
+    document.getElementById('book-income-label').textContent = `수입`;
+    document.getElementById('book-saving-label').textContent = `저축`;
+    document.getElementById('book-cash-label').textContent   = `현금 지출`;
+    document.getElementById('book-bill-label').textContent   = `카드결제 납부`;
+    document.getElementById('book-joint-label').textContent  = `생활비 납입/지출 (모임통장)`;
+
+    document.getElementById('book-remain').textContent    = fmt(periodNet);
+    document.getElementById('book-remain').style.color    = periodNet<0 ? 'var(--red)' : 'var(--green)';
+    document.getElementById('book-income').textContent    = fmt(periodInc);
+    document.getElementById('book-saving').textContent    = fmt(periodSav);
+    document.getElementById('book-cash-spent').textContent= fmt(periodCash-periodBill);
+    document.getElementById('book-bill-spent').textContent= fmt(periodBill);
+
+    const banner=document.getElementById('pending-banner');
+    if(periodCredit>0){
+      banner.style.display='flex';
+      document.getElementById('book-card-pending').textContent=fmt(periodCredit);
+      document.getElementById('book-real-avail').textContent  =fmt(periodNet-periodCredit);
+    } else banner.style.display='none';
+
+    document.getElementById('book-joint-out').textContent    =fmt(periodJointOut);
+    document.getElementById('book-joint-remain').textContent =fmt(periodJointIn-periodJointOut);
+    document.getElementById('book-joint-remain').style.color =(periodJointIn-periodJointOut)<0?'var(--red)':'var(--amber)';
+  }
 
   renderExpList();
 }
