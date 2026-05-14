@@ -727,32 +727,36 @@ window.deleteCategory = async idx => {
 };
 
 // ── 저축 차감 계산 ──
-function getDeductedSavings(sv, ym, fromDate=null) {
+function getDeductedSavings(sv, ym) {
   const today=new Date(), curY=today.getFullYear(), curM=today.getMonth()+1, curD=today.getDate();
   const y=parseInt(ym.slice(0,4)), m=parseInt(ym.slice(5,7));
   const cycle=sv.cycle||'monthly', payDay=sv.payDay||1;
+
   if(sv.start    && sv.start.slice(0,7)    > ym) return 0;
   if(sv.maturity && sv.maturity.slice(0,7) < ym) return 0;
+
   if(cycle==='once'||sv.type==='예금') return sv.start?.slice(0,7)===ym ? sv.amt : 0;
-  const isCurM = (y===curY && m===curM);
+
   if(cycle==='monthly') {
     const pDay=parseInt(payDay);
     if(y>curY||(y===curY&&m>curM)) return 0;
     if(y<curY||(y===curY&&m<curM)) return sv.amt;
     return curD>=pDay ? sv.amt : 0;
   }
+
   if(cycle==='weekly') {
     const wDay=parseInt(payDay); let count=0;
-    const anchor = (isCurM && fromDate) ? new Date(fromDate) : null;
-    for(let d=1; d<=new Date(y,m,0).getDate(); d++) {
-      const dateObj=new Date(y,m-1,d);
-      if(dateObj.getDay()!==wDay) continue;
+    const daysInMonth=new Date(y,m,0).getDate();
+    for(let d=1; d<=daysInMonth; d++) {
+      if(new Date(y,m-1,d).getDay()!==wDay) continue;
+      // 미래 달 스킵
       if(y>curY||(y===curY&&m>curM)) continue;
+      // 현재 달: 오늘 이후 날짜는 아직 납부 안 함
       if(y===curY&&m===curM&&d>curD) continue;
+      // 적금 기간 체크
       const ds=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       if(sv.start    && ds<sv.start)    continue;
       if(sv.maturity && ds>sv.maturity) continue;
-      if(anchor && dateObj<anchor)      continue;
       count++;
     }
     return sv.amt*count;
@@ -946,8 +950,7 @@ function renderExpenses() {
     const cashSpent    =expenses.filter(e=>thisM(e)&&isCash(e)&&byP(e)).reduce((s,e)=>s+e.amt,0);
     const creditPending=expenses.filter(e=>thisM(e)&&isCredit(e)&&byP(e)).reduce((s,e)=>s+e.amt,0);
     const billSpent    =expenses.filter(e=>thisM(e)&&isCash(e)&&e.cat==='카드결제'&&byP(e)).reduce((s,e)=>s+e.amt,0);
-    const latestInc    =getLatestIncomeDate(ym);
-    const savTotal     =savings.filter(savByP).reduce((s,sv)=>s+getDeductedSavings(sv,ym,latestInc),0);
+    const savTotal     =savings.filter(savByP).reduce((s,sv)=>s+getDeductedSavings(sv,ym),0);
     const { personalCarryover, jointCarryover } = getCarryover(p);
     const remain    = personalCarryover + personalInc - livingIn - savTotal - cashSpent;
     const realAvail = remain - creditPending;
@@ -1001,7 +1004,7 @@ function renderExpenses() {
       ...expenses.filter(e=>inRange(e)).map(e=>e.date?.slice(0,7))
     ].filter(Boolean))];
     const periodSav = months.reduce((total,m)=>{
-      return total + savings.filter(savByP).reduce((s,sv)=>s+getDeductedSavings(sv,m,null),0);
+      return total + savings.filter(savByP).reduce((s,sv)=>s+getDeductedSavings(sv,m),0);
     },0);
 
     const periodNet = periodInc - periodLiv - periodSav - periodCash;
@@ -1308,8 +1311,8 @@ function progPct(s,m) {
   return Math.min(100,Math.max(0,Math.round((new Date()-new Date(s))/(new Date(m)-new Date(s))*100)));
 }
 function renderSavings() {
-  const ym=nowYM(), latestInc=getLatestIncomeDate(ym);
-  const monthly=savings.reduce((s,sv)=>s+getDeductedSavings(sv,ym,latestInc),0);
+  const ym=nowYM();
+  const monthly=savings.reduce((s,sv)=>s+getDeductedSavings(sv,ym),0);
   const totalExpect=savings.map(calcExpect).filter(Boolean).reduce((a,b)=>a+b,0);
   document.getElementById('sav-monthly').textContent=fmt(monthly);
   document.getElementById('sav-expect').textContent =totalExpect?fmt(totalExpect):'—';
@@ -1361,13 +1364,13 @@ window.renderSummary = () => {
   const ym   = document.getElementById('summary-month').value||nowYM();
   const exps = expenses.filter(e=>e.date?.startsWith(ym));
   const incs = incomes.filter(i=>i.date?.startsWith(ym));
-  const latestInc = getLatestIncomeDate(ym);
+
 
   const cashSpent    = exps.filter(e=>isCash(e)).reduce((s,e)=>s+e.amt,0);
   const creditPending= exps.filter(e=>isCredit(e)).reduce((s,e)=>s+e.amt,0);
   const totalForCat  = exps.filter(e=>!isJoint(e)).reduce((s,e)=>s+e.amt,0);
   const incTotal     = incs.filter(i=>i.type!=='생활비').reduce((s,i)=>s+i.amt,0);
-  const savMonthly   = savings.reduce((s,sv)=>s+getDeductedSavings(sv,ym,latestInc),0);
+  const savMonthly   = savings.reduce((s,sv)=>s+getDeductedSavings(sv,ym),0);
   const remain       = incTotal - cashSpent - savMonthly;
   const realAvail    = remain - creditPending;
 
@@ -1388,7 +1391,7 @@ window.renderSummary = () => {
 
   // 예적금 항목별 납입액
   const savDetail = savings.map(sv=>{
-    const deducted = getDeductedSavings(sv, ym, latestInc);
+    const deducted = getDeductedSavings(sv, ym);
     if(!deducted) return '';
     return `<div class="sav-summary-row">
       <div style="display:flex;align-items:center;gap:8px">
