@@ -318,7 +318,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
     <div class="form-group">
       <div class="form-row col2">
         <input type="text" id="exp-name" placeholder="항목 이름">
-        <input type="number" id="exp-amt" placeholder="금액" inputmode="numeric">
+        <input type="text" id="exp-amt" placeholder="금액" inputmode="numeric">
       </div>
       <input type="date" id="exp-date">
       <div class="form-row col2">
@@ -349,7 +349,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
     <div class="form-group">
       <div class="form-row col2">
         <input type="text" id="edit-exp-name" placeholder="항목 이름">
-        <input type="number" id="edit-exp-amt" placeholder="금액" inputmode="numeric">
+        <input type="text" id="edit-exp-amt" placeholder="금액" inputmode="numeric">
       </div>
       <input type="date" id="edit-exp-date">
       <div class="form-row col2">
@@ -388,7 +388,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
     <div class="form-group">
       <div class="form-row col2">
         <input type="text" id="inc-name" placeholder="항목 이름">
-        <input type="number" id="inc-amt" placeholder="금액" inputmode="numeric">
+        <input type="text" id="inc-amt" placeholder="금액" inputmode="numeric">
       </div>
       <input type="date" id="inc-date">
       <div class="form-row col2">
@@ -410,7 +410,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
     <div class="form-group">
       <div class="form-row col2">
         <input type="text" id="edit-inc-name" placeholder="항목 이름">
-        <input type="number" id="edit-inc-amt" placeholder="금액" inputmode="numeric">
+        <input type="text" id="edit-inc-amt" placeholder="금액" inputmode="numeric">
       </div>
       <input type="date" id="edit-inc-date">
       <div class="form-row col2">
@@ -432,7 +432,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
         <div class="sel-wrap"><select id="new-card-owner"><option value="이설">이설</option><option value="상훈">상훈</option></select></div>
         <div class="sel-wrap"><select id="new-card-payday"><option value="">결제일 선택</option></select></div>
       </div>
-      <input type="number" id="new-card-target" placeholder="목표 실적 (원)" inputmode="numeric">
+      <input type="text" id="new-card-target" placeholder="목표 실적 (원)" inputmode="numeric">
       <button class="submit-btn" onclick="addCard()">추가하기</button>
     </div>
   </div>
@@ -445,7 +445,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
     <div class="modal-title">실적 수정</div>
     <input type="hidden" id="edit-card-id">
     <div class="form-group">
-      <input type="number" id="edit-card-target" placeholder="목표 실적 (원)" inputmode="numeric">
+      <input type="text" id="edit-card-target" placeholder="목표 실적 (원)" inputmode="numeric">
       <div class="sel-wrap"><select id="edit-card-payday"></select></div>
       <button class="submit-btn" onclick="updateCard()">수정 완료</button>
     </div>
@@ -467,7 +467,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
         <div class="sel-wrap"><select id="sav-payday"></select></div>
       </div>
       <div class="form-row col2">
-        <input type="number" id="sav-amt" placeholder="1회 납입액" inputmode="numeric">
+        <input type="text" id="sav-amt" placeholder="1회 납입액" inputmode="numeric">
         <input type="number" id="sav-rate" placeholder="이율 (%)" step="0.01" inputmode="decimal">
       </div>
       <div class="form-row col2">
@@ -497,7 +497,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
         <div class="sel-wrap"><select id="edit-sav-payday"></select></div>
       </div>
       <div class="form-row col2">
-        <input type="number" id="edit-sav-amt" placeholder="1회 납입액" inputmode="numeric">
+        <input type="text" id="edit-sav-amt" placeholder="1회 납입액" inputmode="numeric">
         <input type="number" id="edit-sav-rate" placeholder="이율 (%)" step="0.01" inputmode="decimal">
       </div>
       <div class="form-row col2">
@@ -544,6 +544,31 @@ const DEFAULT_CATS = [
 ];
 
 const fmt    = n => Math.round(n).toLocaleString('ko-KR')+'원';
+
+// ── 금액 입력 쉼표 포매팅 ──
+const AMT_IDS = [
+  'exp-amt','edit-exp-amt',
+  'inc-amt','edit-inc-amt',
+  'new-card-target','edit-card-target',
+  'sav-amt','edit-sav-amt'
+];
+function setupAmtInputs() {
+  AMT_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.addEventListener('input', function() {
+      const pos = this.selectionStart;
+      const before = this.value.length;
+      const raw = this.value.replace(/[^0-9]/g,'');
+      this.value = raw ? parseInt(raw).toLocaleString('ko-KR') : '';
+      // 커서 위치 보정
+      const after = this.value.length;
+      this.setSelectionRange(pos+(after-before), pos+(after-before));
+    });
+  });
+}
+// 금액 필드에서 숫자만 추출
+const getAmt = id => parseInt(document.getElementById(id).value.replace(/,/g,''))||0;
 // ★ 로컬 시간 기준 (UTC 사용 시 한국 오전 9시 이전에 날짜가 하루 밀리는 버그 방지)
 const toDate = () => {
   const d=new Date();
@@ -829,7 +854,7 @@ function updateCardSelects() {
 // ── 지출 CRUD ──
 window.addExp = async () => {
   const name=document.getElementById('exp-name').value.trim();
-  const amt=parseInt(document.getElementById('exp-amt').value)||0;
+  const amt=getAmt('exp-amt');
   const date=document.getElementById('exp-date').value;
   const cat=document.getElementById('exp-cat').value||'기타';
   const card=document.getElementById('exp-card').value||'현금';
@@ -844,15 +869,17 @@ window.addExp = async () => {
 window.delExp = async id => { if(confirm('삭제할까요?')) await deleteDoc(doc(db,'expenses',id)); };
 window.openEditModal = id => {
   const e=expenses.find(e=>e.id===id); if(!e) return;
-  ['id','name','amt','date','cat','card','person','memo'].forEach(k=>{
+  ['id','name','date','cat','card','person','memo'].forEach(k=>{
     const el=document.getElementById('edit-exp-'+k); if(el) el.value=e[k]||'';
   });
+  // 금액은 쉼표 포맷으로 표시
+  document.getElementById('edit-exp-amt').value = e.amt ? parseInt(e.amt).toLocaleString('ko-KR') : '';
   openModal('modal-exp-edit');
 };
 window.updateExp = async () => {
   const id=document.getElementById('edit-exp-id').value;
   const name=document.getElementById('edit-exp-name').value.trim();
-  const amt=parseInt(document.getElementById('edit-exp-amt').value)||0;
+  const amt=getAmt('edit-exp-amt');
   const date=document.getElementById('edit-exp-date').value;
   const cat=document.getElementById('edit-exp-cat').value||'기타';
   const card=document.getElementById('edit-exp-card').value;
@@ -1155,7 +1182,7 @@ function renderExpList() {
 // ── 수입 ──
 window.addIncome = async () => {
   const name=document.getElementById('inc-name').value.trim();
-  const amt=parseInt(document.getElementById('inc-amt').value)||0;
+  const amt=getAmt('inc-amt');
   const date=document.getElementById('inc-date').value;
   const type=document.getElementById('inc-type').value;
   const person=document.getElementById('inc-person').value;
@@ -1172,7 +1199,7 @@ window.openIncEditModal = id => {
   const i=incomes.find(i=>i.id===id); if(!i) return;
   document.getElementById('edit-inc-id').value     = id;
   document.getElementById('edit-inc-name').value   = i.name;
-  document.getElementById('edit-inc-amt').value    = i.amt;
+  document.getElementById('edit-inc-amt').value    = i.amt ? parseInt(i.amt).toLocaleString('ko-KR') : '';
   document.getElementById('edit-inc-date').value   = i.date;
   document.getElementById('edit-inc-type').value   = i.type;
   document.getElementById('edit-inc-person').value = i.person;
@@ -1183,7 +1210,7 @@ window.openIncEditModal = id => {
 window.updateIncome = async () => {
   const id    = document.getElementById('edit-inc-id').value;
   const name  = document.getElementById('edit-inc-name').value.trim();
-  const amt   = parseInt(document.getElementById('edit-inc-amt').value)||0;
+  const amt   = getAmt('edit-inc-amt');
   const date  = document.getElementById('edit-inc-date').value;
   const type  = document.getElementById('edit-inc-type').value;
   const person= document.getElementById('edit-inc-person').value;
@@ -1236,7 +1263,7 @@ window.addCard = async () => {
   const name=document.getElementById('new-card-name').value.trim();
   const owner=document.getElementById('new-card-owner').value;
   const payDay=document.getElementById('new-card-payday').value;
-  const target=parseInt(document.getElementById('new-card-target').value)||0;
+  const target=getAmt('new-card-target');
   if(!name){alert('카드 이름을 입력해 주세요');return;}
   if(!payDay){alert('결제일을 선택해 주세요');return;}
   cards.push({id:`${owner}_${name}_${Date.now()}`,owner,name,payDay,target});
@@ -1248,13 +1275,13 @@ window.delCard = async id => { if(!confirm('카드를 삭제할까요?'))return;
 window.openCardEditModal = id => {
   const c=cards.find(c=>c.id===id); if(!c) return;
   document.getElementById('edit-card-id').value    =id;
-  document.getElementById('edit-card-target').value=c.target||'';
+  document.getElementById('edit-card-target').value= c.target ? parseInt(c.target).toLocaleString('ko-KR') : '';
   document.getElementById('edit-card-payday').value=c.payDay||'';
   openModal('modal-card-edit');
 };
 window.updateCard = async () => {
   const id=document.getElementById('edit-card-id').value;
-  const target=parseInt(document.getElementById('edit-card-target').value)||0;
+  const target=getAmt('edit-card-target');
   const payDay=document.getElementById('edit-card-payday').value;
   const c=cards.find(c=>c.id===id);
   if(c){c.target=target;c.payDay=payDay;}
@@ -1298,7 +1325,7 @@ window.addSaving = async () => {
   const type=document.getElementById('sav-type').value;
   const cycle=document.getElementById('sav-cycle').value;
   const payDay=parseInt(document.getElementById('sav-payday').value)||0;
-  const amt=parseInt(document.getElementById('sav-amt').value)||0;
+  const amt=getAmt('sav-amt');
   const rate=parseFloat(document.getElementById('sav-rate').value)||0;
   const start=document.getElementById('sav-start').value;
   const maturity=document.getElementById('sav-maturity').value;
@@ -1318,7 +1345,7 @@ window.openSavEditModal = id => {
   document.getElementById('edit-sav-cycle').value   =sv.cycle||'monthly';
   changeEditSavCycle();
   if(sv.cycle!=='once') document.getElementById('edit-sav-payday').value=sv.payDay||(sv.cycle==='weekly'?0:1);
-  document.getElementById('edit-sav-amt').value     =sv.amt;
+  document.getElementById('edit-sav-amt').value     = sv.amt ? parseInt(sv.amt).toLocaleString('ko-KR') : '';
   document.getElementById('edit-sav-rate').value    =sv.rate||'';
   document.getElementById('edit-sav-start').value   =sv.start||'';
   document.getElementById('edit-sav-maturity').value=sv.maturity||'';
@@ -1332,7 +1359,7 @@ window.updateSaving = async () => {
   const type=document.getElementById('edit-sav-type').value;
   const cycle=document.getElementById('edit-sav-cycle').value;
   const payDay=parseInt(document.getElementById('edit-sav-payday').value)||0;
-  const amt=parseInt(document.getElementById('edit-sav-amt').value)||0;
+  const amt=getAmt('edit-sav-amt');
   const rate=parseFloat(document.getElementById('edit-sav-rate').value)||0;
   const start=document.getElementById('edit-sav-start').value;
   const maturity=document.getElementById('edit-sav-maturity').value;
@@ -1534,6 +1561,7 @@ onSnapshot(query(collection(db,'savings'),orderBy('createdAt','desc')),snap=>{
 changeSavCycle();
 loadCards();
 loadCategories();
+setupAmtInputs();
 </script>
 </body>
 </html>
