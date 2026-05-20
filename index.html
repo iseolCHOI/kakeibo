@@ -1208,7 +1208,7 @@ function renderIncomes() {
           <div class="item-sub">${i.date} · ${i.type} · ${i.person}${i.memo?' · '+i.memo:''}</div>
         </div></div>
         <div class="item-right">
-          <span class="item-amt ${i.type==='생활비'?'amber-text':i.type==='모임통장 입금'?'teal-text':'green-text'}">${i.type==='생활비'?'- (모임통장)':i.type==='모임통장 입금'?'+ (모임통장)':'+'} ${fmt(i.amt)}</span>
+          <span class="item-amt ${isJointIncome(i)?'amber-text':i.amt>0?'green-text':'red-text'}">${isJointIncome(i)?'':i.amt>0?'+ ':'- '}${fmt(i.amt)}</span>
           <button class="del-btn" style="font-size:16px;color:var(--text2)" onclick="openIncEditModal('${i.id}')">✎</button>
           <button class="del-btn" onclick="delIncome('${i.id}')">×</button>
         </div>
