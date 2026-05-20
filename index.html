@@ -401,7 +401,27 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
   </div>
 </div>
 
-<!-- 카드 추가 모달 -->
+<!-- 수입 수정 모달 -->
+<div class="modal-backdrop" id="modal-income-edit" onclick="closeModalOutside(event,'modal-income-edit')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">수입 수정</div>
+    <input type="hidden" id="edit-inc-id">
+    <div class="form-group">
+      <div class="form-row col2">
+        <input type="text" id="edit-inc-name" placeholder="항목 이름">
+        <input type="number" id="edit-inc-amt" placeholder="금액" inputmode="numeric">
+      </div>
+      <input type="date" id="edit-inc-date">
+      <div class="form-row col2">
+        <div class="sel-wrap"><select id="edit-inc-type"><option>급여</option><option>생활비</option><option>모임통장 입금</option><option>부업</option><option>용돈</option><option>환급금</option><option>상여금</option><option>배당금</option><option>이자</option><option>기타</option></select></div>
+        <div class="sel-wrap"><select id="edit-inc-person"><option>이설</option><option>상훈</option><option>공동</option></select></div>
+      </div>
+      <input type="text" id="edit-inc-memo" placeholder="메모 (선택)">
+      <button class="submit-btn" onclick="updateIncome()">수정 완료</button>
+    </div>
+  </div>
+</div>
 <div class="modal-backdrop" id="modal-card-add" onclick="closeModalOutside(event,'modal-card-add')">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -1145,7 +1165,33 @@ window.addIncome = async () => {
   ['inc-name','inc-amt','inc-memo'].forEach(id=>document.getElementById(id).value='');
   closeModal('modal-income');
 };
+
 window.delIncome = async id => { if(confirm('삭제할까요?')) await deleteDoc(doc(db,'incomes',id)); };
+
+window.openIncEditModal = id => {
+  const i=incomes.find(i=>i.id===id); if(!i) return;
+  document.getElementById('edit-inc-id').value     = id;
+  document.getElementById('edit-inc-name').value   = i.name;
+  document.getElementById('edit-inc-amt').value    = i.amt;
+  document.getElementById('edit-inc-date').value   = i.date;
+  document.getElementById('edit-inc-type').value   = i.type;
+  document.getElementById('edit-inc-person').value = i.person;
+  document.getElementById('edit-inc-memo').value   = i.memo||'';
+  openModal('modal-income-edit');
+};
+
+window.updateIncome = async () => {
+  const id    = document.getElementById('edit-inc-id').value;
+  const name  = document.getElementById('edit-inc-name').value.trim();
+  const amt   = parseInt(document.getElementById('edit-inc-amt').value)||0;
+  const date  = document.getElementById('edit-inc-date').value;
+  const type  = document.getElementById('edit-inc-type').value;
+  const person= document.getElementById('edit-inc-person').value;
+  const memo  = document.getElementById('edit-inc-memo').value.trim();
+  if(!name||!amt){alert('항목명과 금액을 입력해 주세요');return;}
+  await updateDoc(doc(db,'incomes',id),{name,amt,date,type,person,memo});
+  closeModal('modal-income-edit');
+};
 
 function renderIncomes() {
   const ym=nowYM(), list=incomes.filter(i=>i.date?.startsWith(ym));
@@ -1163,6 +1209,7 @@ function renderIncomes() {
         </div></div>
         <div class="item-right">
           <span class="item-amt ${i.type==='생활비'?'amber-text':i.type==='모임통장 입금'?'teal-text':'green-text'}">${i.type==='생활비'?'- (모임통장)':i.type==='모임통장 입금'?'+ (모임통장)':'+'} ${fmt(i.amt)}</span>
+          <button class="del-btn" style="font-size:16px;color:var(--text2)" onclick="openIncEditModal('${i.id}')">✎</button>
           <button class="del-btn" onclick="delIncome('${i.id}')">×</button>
         </div>
       </div>`).join('');
