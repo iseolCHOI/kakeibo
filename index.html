@@ -392,7 +392,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
       </div>
       <input type="date" id="inc-date">
       <div class="form-row col2">
-        <div class="sel-wrap"><select id="inc-type"><option>급여</option><option>생활비</option><option>부업</option><option>용돈</option><option>환급금</option><option>상여금</option><option>배당금</option><option>이자</option><option>기타</option></select></div>
+        <div class="sel-wrap"><select id="inc-type"><option>급여</option><option>생활비</option><option>모임통장 입금</option><option>부업</option><option>용돈</option><option>환급금</option><option>상여금</option><option>배당금</option><option>이자</option><option>기타</option></select></div>
         <div class="sel-wrap"><select id="inc-person"><option>이설</option><option>상훈</option><option>공동</option></select></div>
       </div>
       <input type="text" id="inc-memo" placeholder="메모 (선택)">
@@ -524,8 +524,15 @@ const DEFAULT_CATS = [
 ];
 
 const fmt    = n => Math.round(n).toLocaleString('ko-KR')+'원';
-const toDate = () => new Date().toISOString().split('T')[0];
-const nowYM  = () => new Date().toISOString().slice(0,7);
+// ★ 로컬 시간 기준 (UTC 사용 시 한국 오전 9시 이전에 날짜가 하루 밀리는 버그 방지)
+const toDate = () => {
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+};
+const nowYM = () => {
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+};
 
 let expenses=[], incomes=[], savings=[], cards=[];
 let categories = [...DEFAULT_CATS]; // 동적 카테고리
@@ -543,6 +550,8 @@ function catColor(name) {
 const isCash   = e => e.card === '현금';
 const isCredit = e => e.card !== '현금' && e.card !== '모임통장';
 const isJoint  = e => e.card === '모임통장';
+// 모임통장으로만 들어오는 수입 (생활비 납입 + 모임통장 직접 입금)
+const isJointIncome = i => i.type === '생활비' || i.type === '모임통장 입금';
 
 // ── 셀렉트 초기 ──
 ['new-card-payday','edit-card-payday'].forEach(id=>{
@@ -766,7 +775,7 @@ function getDeductedSavings(sv, ym) {
 
 function getLatestIncomeDate(ym) {
   return incomes
-    .filter(i=>i.date?.startsWith(ym)&&i.type!=='생활비')
+    .filter(i=>i.date?.startsWith(ym)&&!isJointIncome(i))
     .sort((a,b)=>b.date.localeCompare(a.date))[0]?.date || null;
 }
 
@@ -881,14 +890,14 @@ function getCarryover(p) {
   // 이번달 이전 데이터만
   // ★ 저축은 제외 — 과거 저축은 이미 실제 통장 잔액에 반영된 금액이므로
   //   현금지출(pastCash)에 포함된 것으로 간주. 이중 차감 방지.
-  const pastInc  = incomes.filter(i=>i.date?.slice(0,7)<ym&&i.type!=='생활비'&&byP(i)).reduce((s,i)=>s+i.amt,0);
+  const pastInc  = incomes.filter(i=>i.date?.slice(0,7)<ym&&!isJointIncome(i)&&byP(i)).reduce((s,i)=>s+i.amt,0);
   const pastLiv  = incomes.filter(i=>i.date?.slice(0,7)<ym&&i.type==='생활비'&&byPLiving(i)).reduce((s,i)=>s+i.amt,0);
   const pastCash = expenses.filter(e=>e.date?.slice(0,7)<ym&&isCash(e)&&byP(e)).reduce((s,e)=>s+e.amt,0);
 
   const personalCarryover = pastInc - pastLiv - pastCash;
 
-  // 모임통장 이월 (탭 무관 전체 기준)
-  const pastJointIn  = incomes.filter(i=>i.date?.slice(0,7)<ym&&i.type==='생활비').reduce((s,i)=>s+i.amt,0);
+  // 모임통장 이월: 생활비 납입 + 모임통장 직접 입금 모두 포함
+  const pastJointIn  = incomes.filter(i=>i.date?.slice(0,7)<ym&&isJointIncome(i)).reduce((s,i)=>s+i.amt,0);
   const pastJointOut = expenses.filter(e=>e.date?.slice(0,7)<ym&&isJoint(e)).reduce((s,e)=>s+e.amt,0);
   const jointCarryover = pastJointIn - pastJointOut;
 
@@ -946,7 +955,7 @@ function renderExpenses() {
   if(expPeriod === 'thisMonth') {
     // ── 이번달: 이월 포함 잔액 계산 ──
     const livingIn     =incomes.filter(i=>thisM(i)&&i.type==='생활비'&&byPLiving(i)).reduce((s,i)=>s+i.amt,0);
-    const personalInc  =incomes.filter(i=>thisM(i)&&i.type!=='생활비'&&byP(i)).reduce((s,i)=>s+i.amt,0);
+    const personalInc  =incomes.filter(i=>thisM(i)&&!isJointIncome(i)&&byP(i)).reduce((s,i)=>s+i.amt,0);
     const cashSpent    =expenses.filter(e=>thisM(e)&&isCash(e)&&byP(e)).reduce((s,e)=>s+e.amt,0);
     const creditPending=expenses.filter(e=>thisM(e)&&isCredit(e)&&byP(e)).reduce((s,e)=>s+e.amt,0);
     const billSpent    =expenses.filter(e=>thisM(e)&&isCash(e)&&e.cat==='카드결제'&&byP(e)).reduce((s,e)=>s+e.amt,0);
@@ -954,7 +963,7 @@ function renderExpenses() {
     const { personalCarryover, jointCarryover } = getCarryover(p);
     const remain    = personalCarryover + personalInc - livingIn - savTotal - cashSpent;
     const realAvail = remain - creditPending;
-    const jointLivingIn=incomes.filter(i=>thisM(i)&&i.type==='생활비').reduce((s,i)=>s+i.amt,0);
+    const jointLivingIn=incomes.filter(i=>thisM(i)&&isJointIncome(i)).reduce((s,i)=>s+i.amt,0);
     const jointSpent   =expenses.filter(e=>thisM(e)&&isJoint(e)).reduce((s,e)=>s+e.amt,0);
     const jointRemain  = jointCarryover + jointLivingIn - jointSpent;
 
@@ -992,11 +1001,11 @@ function renderExpenses() {
     const {from, to} = getDateRange();
     const inRange = x => x.date >= from && x.date <= to;
 
-    const periodInc   =incomes.filter(i=>inRange(i)&&i.type!=='생활비'&&byP(i)).reduce((s,i)=>s+i.amt,0);
+    const periodInc   =incomes.filter(i=>inRange(i)&&!isJointIncome(i)&&byP(i)).reduce((s,i)=>s+i.amt,0);
     const periodLiv   =incomes.filter(i=>inRange(i)&&i.type==='생활비'&&byPLiving(i)).reduce((s,i)=>s+i.amt,0);
     const periodCash  =expenses.filter(e=>inRange(e)&&isCash(e)&&byP(e)).reduce((s,e)=>s+e.amt,0);
     const periodCredit=expenses.filter(e=>inRange(e)&&isCredit(e)&&byP(e)).reduce((s,e)=>s+e.amt,0);
-    const periodJointIn =incomes.filter(i=>inRange(i)&&i.type==='생활비').reduce((s,i)=>s+i.amt,0);
+    const periodJointIn =incomes.filter(i=>inRange(i)&&isJointIncome(i)).reduce((s,i)=>s+i.amt,0);
     const periodJointOut=expenses.filter(e=>inRange(e)&&isJoint(e)).reduce((s,e)=>s+e.amt,0);
 
     const months=[...new Set([
@@ -1140,8 +1149,8 @@ window.delIncome = async id => { if(confirm('삭제할까요?')) await deleteDoc
 
 function renderIncomes() {
   const ym=nowYM(), list=incomes.filter(i=>i.date?.startsWith(ym));
-  document.getElementById('income-total').textContent=fmt(list.filter(i=>i.type!=='생활비').reduce((s,i)=>s+i.amt,0));
-  document.getElementById('income-extra').textContent=fmt(list.filter(i=>i.type!=='급여'&&i.type!=='생활비').reduce((s,i)=>s+i.amt,0));
+  document.getElementById('income-total').textContent=fmt(list.filter(i=>!isJointIncome(i)).reduce((s,i)=>s+i.amt,0));
+  document.getElementById('income-extra').textContent=fmt(list.filter(i=>i.type!=='급여'&&!isJointIncome(i)).reduce((s,i)=>s+i.amt,0));
   ['이설','상훈'].forEach(p=>{
     const pList=list.filter(i=>i.person===p||i.person==='공동').sort((a,b)=>(b.date||'').localeCompare(a.date||'')||b.createdAt-a.createdAt);
     const el=document.getElementById('income-list-'+p);
@@ -1153,7 +1162,7 @@ function renderIncomes() {
           <div class="item-sub">${i.date} · ${i.type} · ${i.person}${i.memo?' · '+i.memo:''}</div>
         </div></div>
         <div class="item-right">
-          <span class="item-amt ${i.type==='생활비'?'amber-text':'green-text'}">${i.type==='생활비'?'-':'+'} ${fmt(i.amt)}</span>
+          <span class="item-amt ${i.type==='생활비'?'amber-text':i.type==='모임통장 입금'?'teal-text':'green-text'}">${i.type==='생활비'?'- (모임통장)':i.type==='모임통장 입금'?'+ (모임통장)':'+'} ${fmt(i.amt)}</span>
           <button class="del-btn" onclick="delIncome('${i.id}')">×</button>
         </div>
       </div>`).join('');
@@ -1369,7 +1378,7 @@ window.renderSummary = () => {
   const cashSpent    = exps.filter(e=>isCash(e)).reduce((s,e)=>s+e.amt,0);
   const creditPending= exps.filter(e=>isCredit(e)).reduce((s,e)=>s+e.amt,0);
   const totalForCat  = exps.filter(e=>!isJoint(e)).reduce((s,e)=>s+e.amt,0);
-  const incTotal     = incs.filter(i=>i.type!=='생활비').reduce((s,i)=>s+i.amt,0);
+  const incTotal     = incs.filter(i=>!isJointIncome(i)).reduce((s,i)=>s+i.amt,0);
   const savMonthly   = savings.reduce((s,sv)=>s+getDeductedSavings(sv,ym),0);
   const remain       = incTotal - cashSpent - savMonthly;
   const realAvail    = remain - creditPending;
