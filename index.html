@@ -671,9 +671,19 @@ window.changeEditSavCycle = () => {
 async function loadCategories() {
   const snap = await getDoc(doc(db,'settings','categories'));
   categories = snap.exists() ? snap.data().list : [...DEFAULT_CATS];
+
+  // ★ 기본 카테고리 중 없는 항목 자동 추가 (앱 업데이트 시 새 카테고리 반영)
+  let changed = false;
+  DEFAULT_CATS.forEach(def => {
+    if(!categories.find(c=>c.name===def.name)) {
+      categories.push(def);
+      changed = true;
+    }
+  });
+  if(changed) await setDoc(doc(db,'settings','categories'), {list: categories});
+
   updateCategorySelects();
   renderCatList();
-  // ★ 카테고리 로드 완료 후 색상이 반영되도록 전체 재렌더링
   renderExpenses();
   renderCardPerf();
   if(document.getElementById('page-summary').classList.contains('on')) renderSummary();
@@ -978,12 +988,29 @@ function getCarryover(p) {
   const ym = nowYM();
   const byP      = x => p==='all' ? (x.person==='이설'||x.person==='상훈') : x.person===p;
   const byPLiving= i => p==='all' ? (i.person==='이설'||i.person==='상훈') : i.person===p;
+  const savByP   = sv=> p==='all' ? (sv.owner==='이설'||sv.owner==='상훈')  : sv.owner===p;
 
-  // 이번달 이전 누적 (저축도 현금 지출로 입력되므로 pastCash에 자동 포함)
+  // 이번달 이전 누적
   const pastInc  = incomes.filter(i=>i.date?.slice(0,7)<ym&&!isJointIncome(i)&&byP(i)).reduce((s,i)=>s+i.amt,0);
   const pastLiv  = incomes.filter(i=>i.date?.slice(0,7)<ym&&i.type==='생활비'&&byPLiving(i)).reduce((s,i)=>s+i.amt,0);
   const pastCash = expenses.filter(e=>e.date?.slice(0,7)<ym&&isCash(e)&&byP(e)).reduce((s,e)=>s+e.amt,0);
-  const personalCarryover = pastInc - pastLiv - pastCash;
+
+  // ★ 과거 저축: 자동계산 방식 유지 (이번달부터 수동 입력으로 전환)
+  //   단, 수동으로 이미 입력된 저축 지출은 pastCash에 포함되어 있으므로
+  //   자동계산에서는 수동 입력이 없는 달만 적용
+  const pastMonths = [...new Set([
+    ...incomes.map(x=>x.date?.slice(0,7)),
+    ...expenses.map(x=>x.date?.slice(0,7))
+  ].filter(m=>m&&m<ym))];
+
+  const pastSav = pastMonths.reduce((total,m) => {
+    // 해당 월에 수동으로 입력된 저축 지출이 있으면 자동계산 스킵 (이미 pastCash에 포함)
+    const hasManual = expenses.some(e=>e.date?.startsWith(m)&&isCash(e)&&isSavingExp(e)&&byP(e));
+    if(hasManual) return total;
+    return total + savings.filter(savByP).reduce((s,sv)=>s+getDeductedSavings(sv,m),0);
+  }, 0);
+
+  const personalCarryover = pastInc - pastLiv - pastSav - pastCash;
 
   // 모임통장 이월
   const pastJointIn  = incomes.filter(i=>i.date?.slice(0,7)<ym&&isJointIncome(i)).reduce((s,i)=>s+i.amt,0);
@@ -1116,7 +1143,7 @@ function renderExpenses() {
     document.getElementById('book-saving-label').textContent= '저축';
     document.getElementById('book-cash-label').textContent  = '현금 지출';
     document.getElementById('book-bill-label').textContent  = '카드결제 납부';
-    document.getElementById('book-joint-label').textContent = '생활비 납입/지출 (모임통장)';
+    document.getElementById('book-joint-label').textContent = '생활비 잔액 (모임통장)';
 
     document.getElementById('book-remain').textContent      = fmt(periodNet);
     document.getElementById('book-remain').style.color      = periodNet<0 ? 'var(--red)' : 'var(--green)';
@@ -1132,9 +1159,15 @@ function renderExpenses() {
       document.getElementById('book-real-avail').textContent  =fmt(periodNet-periodCredit);
     } else banner.style.display='none';
 
-    document.getElementById('book-joint-out').textContent    =fmt(periodJointOut);
-    document.getElementById('book-joint-remain').textContent =fmt(periodJointIn-periodJointOut);
-    document.getElementById('book-joint-remain').style.color =(periodJointIn-periodJointOut)<0?'var(--red)':'var(--amber)';
+    // ★ 모임통장은 기간 무관하게 항상 현재 누적 잔액 표시
+    const { jointCarryover: jc } = getCarryover('all');
+    const curYm       = nowYM();
+    const curJointIn  = incomes.filter(i=>i.date?.startsWith(curYm)&&isJointIncome(i)).reduce((s,i)=>s+i.amt,0);
+    const curJointOut = expenses.filter(e=>e.date?.startsWith(curYm)&&isJoint(e)).reduce((s,e)=>s+e.amt,0);
+    const curJointRemain = jc + curJointIn - curJointOut;
+    document.getElementById('book-joint-out').textContent    = fmt(curJointOut);
+    document.getElementById('book-joint-remain').textContent = fmt(curJointRemain);
+    document.getElementById('book-joint-remain').style.color = curJointRemain<0?'var(--red)':'var(--amber)';
   }
 
   renderExpList();
