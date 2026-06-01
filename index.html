@@ -990,25 +990,30 @@ function getCarryover(p) {
   const byPLiving= i => p==='all' ? (i.person==='이설'||i.person==='상훈') : i.person===p;
   const savByP   = sv=> p==='all' ? (sv.owner==='이설'||sv.owner==='상훈')  : sv.owner===p;
 
-  // 이번달 이전 누적
   const pastInc  = incomes.filter(i=>i.date?.slice(0,7)<ym&&!isJointIncome(i)&&byP(i)).reduce((s,i)=>s+i.amt,0);
   const pastLiv  = incomes.filter(i=>i.date?.slice(0,7)<ym&&i.type==='생활비'&&byPLiving(i)).reduce((s,i)=>s+i.amt,0);
-  const pastCash = expenses.filter(e=>e.date?.slice(0,7)<ym&&isCash(e)&&byP(e)).reduce((s,e)=>s+e.amt,0);
 
-  // ★ 과거 저축: 자동계산 방식 유지 (이번달부터 수동 입력으로 전환)
-  //   단, 수동으로 이미 입력된 저축 지출은 pastCash에 포함되어 있으므로
-  //   자동계산에서는 수동 입력이 없는 달만 적용
+  // ★ pastCash: 저축/투자 카테고리 제외 (pastSav가 별도 처리)
+  const pastCash = expenses.filter(e=>
+    e.date?.slice(0,7)<ym && isCash(e) && byP(e) && e.cat!=='저축/투자'
+  ).reduce((s,e)=>s+e.amt,0);
+
+  // ★ pastSav: 앱에 등록한 달(createdAt)부터만 자동계산
+  //    start일이 과거여도 등록 전 달은 계산 제외
   const pastMonths = [...new Set([
     ...incomes.map(x=>x.date?.slice(0,7)),
     ...expenses.map(x=>x.date?.slice(0,7))
   ].filter(m=>m&&m<ym))];
 
-  const pastSav = pastMonths.reduce((total,m) => {
-    // 해당 월에 수동으로 입력된 저축 지출이 있으면 자동계산 스킵 (이미 pastCash에 포함)
-    const hasManual = expenses.some(e=>e.date?.startsWith(m)&&isCash(e)&&isSavingExp(e)&&byP(e));
-    if(hasManual) return total;
-    return total + savings.filter(savByP).reduce((s,sv)=>s+getDeductedSavings(sv,m),0);
-  }, 0);
+  const pastSav = pastMonths.reduce((total,m)=>
+    total + savings.filter(savByP).reduce((s,sv)=>{
+      // 등록월 계산 (createdAt 기준, 로컬 시간)
+      const rd = new Date(sv.createdAt);
+      const regYM = `${rd.getFullYear()}-${String(rd.getMonth()+1).padStart(2,'0')}`;
+      if(m < regYM) return s; // 등록 전 달은 스킵
+      return s + getDeductedSavings(sv,m);
+    },0)
+  ,0);
 
   const personalCarryover = pastInc - pastLiv - pastSav - pastCash;
 
@@ -1159,14 +1164,14 @@ function renderExpenses() {
       document.getElementById('book-real-avail').textContent  =fmt(periodNet-periodCredit);
     } else banner.style.display='none';
 
-    // ★ 모임통장은 기간 무관하게 항상 현재 누적 잔액 표시
+    // ★ 모임통장: 지출은 해당 기간, 잔액은 현재 누적
     const { jointCarryover: jc } = getCarryover('all');
     const curYm       = nowYM();
     const curJointIn  = incomes.filter(i=>i.date?.startsWith(curYm)&&isJointIncome(i)).reduce((s,i)=>s+i.amt,0);
     const curJointOut = expenses.filter(e=>e.date?.startsWith(curYm)&&isJoint(e)).reduce((s,e)=>s+e.amt,0);
     const curJointRemain = jc + curJointIn - curJointOut;
-    document.getElementById('book-joint-out').textContent    = fmt(curJointOut);
-    document.getElementById('book-joint-remain').textContent = fmt(curJointRemain);
+    document.getElementById('book-joint-out').textContent    = fmt(periodJointOut); // 해당 기간 지출
+    document.getElementById('book-joint-remain').textContent = fmt(curJointRemain); // 현재 누적 잔액
     document.getElementById('book-joint-remain').style.color = curJointRemain<0?'var(--red)':'var(--amber)';
   }
 
