@@ -256,7 +256,10 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
   <div class="page-header"><span class="page-title">예적금</span><button class="header-btn" onclick="openModal('modal-saving')">+ 추가</button></div>
   <div class="summary-stats">
     <div class="stat-card"><div class="stat-label">이번달 납입액</div><div class="stat-val teal-text" id="sav-monthly">0원</div></div>
-    <div class="stat-card"><div class="stat-label">만기 수령 예상</div><div class="stat-val green-text" id="sav-expect">0원</div></div>
+    <div class="stat-card"><div class="stat-label">총 납입액</div><div class="stat-val blue-text" id="sav-total-paid">0원</div></div>
+  </div>
+  <div class="summary-stats">
+    <div class="stat-card"><div class="stat-label">만기 수령 예상 합계</div><div class="stat-val green-text" id="sav-expect">0원</div></div>
   </div>
   <div id="sav-list"></div>
 </div>
@@ -331,6 +334,14 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
       </div>
       <div class="sel-wrap"><select id="exp-person"><option value="이설">이설</option><option value="상훈">상훈</option><option value="공동">공동</option></select></div>
       <input type="text" id="exp-memo" placeholder="메모 (선택)">
+      <!-- ★ 저축/투자 연결 -->
+      <div id="exp-saving-link-wrap" style="display:none">
+        <div class="sel-wrap">
+          <select id="exp-saving-link">
+            <option value="">저축 계획 연결 안 함</option>
+          </select>
+        </div>
+      </div>
       <div id="exp-card-hint" style="display:none" class="card-hint">
         💳 카드 지출은 잔액에서 <b>차감되지 않아요</b>.<br>
         카드 결제일에 결제수단 <b>현금</b> · 카테고리 <b>카드결제</b>로 합산 입력해 주세요.
@@ -358,6 +369,12 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
       </div>
       <div class="sel-wrap"><select id="edit-exp-person"><option value="이설">이설</option><option value="상훈">상훈</option><option value="공동">공동</option></select></div>
       <input type="text" id="edit-exp-memo" placeholder="메모 (선택)">
+      <!-- ★ 저축/투자 연결 -->
+      <div class="sel-wrap">
+        <select id="edit-exp-saving-link">
+          <option value="">저축 계획 연결 안 함</option>
+        </select>
+      </div>
       <button class="submit-btn" onclick="updateExp()">수정 완료</button>
     </div>
   </div>
@@ -460,7 +477,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
     <div class="form-group">
       <div class="form-row col2">
         <input type="text" id="sav-name" placeholder="상품명">
-        <div class="sel-wrap"><select id="sav-type"><option>적금</option><option>예금</option></select></div>
+        <div class="sel-wrap"><select id="sav-type"><option>적금</option><option>예금</option><option>주식/펀드</option><option>ISA</option><option>기타</option></select></div>
       </div>
       <div class="form-row col2">
         <div class="sel-wrap"><select id="sav-cycle" onchange="changeSavCycle()"><option value="monthly">매월</option><option value="weekly">매주</option><option value="once">일시납</option></select></div>
@@ -490,7 +507,7 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
     <div class="form-group">
       <div class="form-row col2">
         <input type="text" id="edit-sav-name" placeholder="상품명">
-        <div class="sel-wrap"><select id="edit-sav-type"><option>적금</option><option>예금</option></select></div>
+        <div class="sel-wrap"><select id="edit-sav-type"><option>적금</option><option>예금</option><option>주식/펀드</option><option>ISA</option><option>기타</option></select></div>
       </div>
       <div class="form-row col2">
         <div class="sel-wrap"><select id="edit-sav-cycle" onchange="changeEditSavCycle()"><option value="monthly">매월</option><option value="weekly">매주</option><option value="once">일시납</option></select></div>
@@ -539,7 +556,8 @@ const DEFAULT_CATS = [
   {name:'문화/여가', color:'#D85A30'},
   {name:'용돈',     color:'#5DCAA5'},
   {name:'보험',     color:'#85B7EB'},
-  {name:'카드결제',  color:'#0F6E56'},
+  {name:'저축/투자', color:'#0F6E56'},
+  {name:'카드결제',  color:'#378ADD'},
   {name:'기타',     color:'#888780'},
 ];
 
@@ -591,10 +609,12 @@ function catColor(name) {
   return categories.find(c=>c.name===name)?.color || '#888780';
 }
 
-// ── 지출 분류 ──
+// ── 지출 분류 헬퍼 ──
 const isCash   = e => e.card === '현금';
 const isCredit = e => e.card !== '현금' && e.card !== '모임통장';
 const isJoint  = e => e.card === '모임통장';
+// 저축/투자 연결 지출
+const isSavingExp = e => e.savingId && e.savingId !== '';
 // 모임통장으로만 들어오는 수입 (생활비 납입 + 모임통장 직접 입금)
 const isJointIncome = i => i.type === '생활비' || i.type === '모임통장 입금';
 
@@ -611,6 +631,23 @@ document.getElementById('exp-card').addEventListener('change', function(){
   document.getElementById('exp-card-hint').style.display =
     isCredit({card:this.value}) ? 'block' : 'none';
 });
+
+// ★ 카테고리 선택 시 저축 연결 드롭다운 표시/숨김
+document.getElementById('exp-cat').addEventListener('change', function(){
+  const wrap = document.getElementById('exp-saving-link-wrap');
+  wrap.style.display = (this.value === '저축/투자') ? 'block' : 'none';
+  if(this.value !== '저축/투자') document.getElementById('exp-saving-link').value = '';
+});
+
+// ★ 저축 링크 셀렉트 갱신 (savings 로드/변경 시 호출)
+function updateSavingLinkSelects() {
+  const opts = '<option value="">저축 계획 연결 안 함</option>'
+    + savings.map(sv=>`<option value="${sv.id}">[${sv.type}] ${sv.name} (${sv.owner})</option>`).join('');
+  ['exp-saving-link','edit-exp-saving-link'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.innerHTML = opts;
+  });
+}
 
 // ── 예적금 주기 ──
 window.changeSavCycle = () => {
@@ -860,10 +897,13 @@ window.addExp = async () => {
   const card=document.getElementById('exp-card').value||'현금';
   const person=document.getElementById('exp-person').value;
   const memo=document.getElementById('exp-memo').value.trim();
+  const savingId=document.getElementById('exp-saving-link').value||'';
   if(!name||!amt){alert('항목명과 금액을 입력해 주세요');return;}
-  await addDoc(collection(db,'expenses'),{name,amt,date,cat,card,person,memo,createdAt:Date.now()});
+  await addDoc(collection(db,'expenses'),{name,amt,date,cat,card,person,memo,savingId,createdAt:Date.now()});
   ['exp-name','exp-amt','exp-memo'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('exp-card-hint').style.display='none';
+  document.getElementById('exp-saving-link').value='';
+  document.getElementById('exp-saving-link-wrap').style.display='none';
   closeModal('modal-exp');
 };
 window.delExp = async id => { if(confirm('삭제할까요?')) await deleteDoc(doc(db,'expenses',id)); };
@@ -872,8 +912,8 @@ window.openEditModal = id => {
   ['id','name','date','cat','card','person','memo'].forEach(k=>{
     const el=document.getElementById('edit-exp-'+k); if(el) el.value=e[k]||'';
   });
-  // 금액은 쉼표 포맷으로 표시
   document.getElementById('edit-exp-amt').value = e.amt ? parseInt(e.amt).toLocaleString('ko-KR') : '';
+  document.getElementById('edit-exp-saving-link').value = e.savingId||'';
   openModal('modal-exp-edit');
 };
 window.updateExp = async () => {
@@ -885,8 +925,9 @@ window.updateExp = async () => {
   const card=document.getElementById('edit-exp-card').value;
   const person=document.getElementById('edit-exp-person').value;
   const memo=document.getElementById('edit-exp-memo').value.trim();
+  const savingId=document.getElementById('edit-exp-saving-link').value||'';
   if(!name||!amt){alert('항목명과 금액을 입력해 주세요');return;}
-  await updateDoc(doc(db,'expenses',id),{name,amt,date,cat,card,person,memo});
+  await updateDoc(doc(db,'expenses',id),{name,amt,date,cat,card,person,memo,savingId});
   closeModal('modal-exp-edit');
 };
 window.filterExp = (v,btn) => {
@@ -899,10 +940,14 @@ window.filterExp = (v,btn) => {
 
 // ── 지출 태그 헬퍼 (모듈 레벨) ──
 const getTag = e => {
-  if(isJoint(e))        return `<span class="deduct-tag tag-joint">모임통장</span>`;
-  if(e.cat==='카드결제') return `<span class="deduct-tag tag-bill">카드결제 납부</span>`;
-  if(isCash(e))         return `<span class="deduct-tag tag-cash">현금</span>`;
-  if(isCredit(e))       return `<span class="deduct-tag tag-card">💳 다음달 청구</span>`;
+  if(isJoint(e))         return `<span class="deduct-tag tag-joint">모임통장</span>`;
+  if(e.cat==='카드결제')  return `<span class="deduct-tag tag-bill">카드결제 납부</span>`;
+  if(isSavingExp(e)) {
+    const sv = savings.find(s=>s.id===e.savingId);
+    return `<span class="deduct-tag" style="background:#e1f5ee;color:var(--teal)">📌 ${sv?sv.name:'저축'}</span>`;
+  }
+  if(isCash(e))          return `<span class="deduct-tag tag-cash">현금</span>`;
+  if(isCredit(e))        return `<span class="deduct-tag tag-card">💳 다음달 청구</span>`;
   return '';
 };
 
@@ -934,16 +979,13 @@ function getCarryover(p) {
   const byP      = x => p==='all' ? (x.person==='이설'||x.person==='상훈') : x.person===p;
   const byPLiving= i => p==='all' ? (i.person==='이설'||i.person==='상훈') : i.person===p;
 
-  // 이번달 이전 데이터만
-  // ★ 저축은 제외 — 과거 저축은 이미 실제 통장 잔액에 반영된 금액이므로
-  //   현금지출(pastCash)에 포함된 것으로 간주. 이중 차감 방지.
+  // 이번달 이전 누적 (저축도 현금 지출로 입력되므로 pastCash에 자동 포함)
   const pastInc  = incomes.filter(i=>i.date?.slice(0,7)<ym&&!isJointIncome(i)&&byP(i)).reduce((s,i)=>s+i.amt,0);
   const pastLiv  = incomes.filter(i=>i.date?.slice(0,7)<ym&&i.type==='생활비'&&byPLiving(i)).reduce((s,i)=>s+i.amt,0);
   const pastCash = expenses.filter(e=>e.date?.slice(0,7)<ym&&isCash(e)&&byP(e)).reduce((s,e)=>s+e.amt,0);
-
   const personalCarryover = pastInc - pastLiv - pastCash;
 
-  // 모임통장 이월: 생활비 납입 + 모임통장 직접 입금 모두 포함
+  // 모임통장 이월
   const pastJointIn  = incomes.filter(i=>i.date?.slice(0,7)<ym&&isJointIncome(i)).reduce((s,i)=>s+i.amt,0);
   const pastJointOut = expenses.filter(e=>e.date?.slice(0,7)<ym&&isJoint(e)).reduce((s,e)=>s+e.amt,0);
   const jointCarryover = pastJointIn - pastJointOut;
@@ -1006,9 +1048,11 @@ function renderExpenses() {
     const cashSpent    =expenses.filter(e=>thisM(e)&&isCash(e)&&byP(e)).reduce((s,e)=>s+e.amt,0);
     const creditPending=expenses.filter(e=>thisM(e)&&isCredit(e)&&byP(e)).reduce((s,e)=>s+e.amt,0);
     const billSpent    =expenses.filter(e=>thisM(e)&&isCash(e)&&e.cat==='카드결제'&&byP(e)).reduce((s,e)=>s+e.amt,0);
-    const savTotal     =savings.filter(savByP).reduce((s,sv)=>s+getDeductedSavings(sv,ym),0);
+    // ★ 저축: 자동계산 대신 저축연결 지출 합산
+    const savTotal     =expenses.filter(e=>thisM(e)&&isCash(e)&&isSavingExp(e)&&byP(e)).reduce((s,e)=>s+e.amt,0);
     const { personalCarryover, jointCarryover } = getCarryover(p);
-    const remain    = personalCarryover + personalInc - livingIn - savTotal - cashSpent;
+    // ★ cashSpent에 이미 savTotal 포함 (저축도 현금 지출이므로)
+    const remain    = personalCarryover + personalInc - livingIn - cashSpent;
     const realAvail = remain - creditPending;
     const jointLivingIn=incomes.filter(i=>thisM(i)&&isJointIncome(i)).reduce((s,i)=>s+i.amt,0);
     const jointSpent   =expenses.filter(e=>thisM(e)&&isJoint(e)).reduce((s,e)=>s+e.amt,0);
@@ -1017,19 +1061,19 @@ function renderExpenses() {
     const personLabel = p==='all' ? '(전체)' : `(${p})`;
     document.getElementById('book-hero-label').textContent  = `이번 달 남은 금액 ${personLabel}`;
     document.getElementById('book-income-label').textContent= '총 수입';
-    document.getElementById('book-saving-label').textContent= '저축 (납입완료)';
+    document.getElementById('book-saving-label').textContent= '저축 납입';
     document.getElementById('book-cash-label').textContent  = '현금 지출';
     document.getElementById('book-bill-label').textContent  = '카드결제 납부';
     document.getElementById('book-joint-label').textContent = '생활비 잔액 (모임통장)';
 
     document.getElementById('book-remain').textContent      = fmt(remain);
     document.getElementById('book-remain').style.color      = remain<0 ? 'var(--red)' : 'var(--green)';
-    // ★ 총수입: 이번달 수입 + 이월 잔액을 두 줄로 표시
     document.getElementById('book-income').innerHTML = personalCarryover
       ? `${fmt(personalInc)}<br><span style="font-size:11px;color:var(--text2);font-weight:400">+이월 ${fmt(personalCarryover)}</span>`
       : fmt(personalInc);
     document.getElementById('book-saving').textContent      = fmt(savTotal);
-    document.getElementById('book-cash-spent').textContent  = fmt(cashSpent - billSpent);
+    // 현금 지출 = 순수 현금(저축·카드결제 제외)
+    document.getElementById('book-cash-spent').textContent  = fmt(cashSpent - billSpent - savTotal);
     document.getElementById('book-bill-spent').textContent  = fmt(billSpent);
 
     const banner=document.getElementById('pending-banner');
@@ -1395,34 +1439,67 @@ function progPct(s,m) {
 }
 function renderSavings() {
   const ym=nowYM();
-  const monthly=savings.reduce((s,sv)=>s+getDeductedSavings(sv,ym),0);
-  const totalExpect=savings.map(calcExpect).filter(Boolean).reduce((a,b)=>a+b,0);
-  document.getElementById('sav-monthly').textContent=fmt(monthly);
-  document.getElementById('sav-expect').textContent =totalExpect?fmt(totalExpect):'—';
+  // ★ 이번달 납입액: 저축 연결된 지출 합산
+  const monthly    = expenses.filter(e=>e.date?.startsWith(ym)&&isSavingExp(e)&&isCash(e)).reduce((s,e)=>s+e.amt,0);
+  // ★ 총 납입액: 전체 기간 저축 연결 지출 합산
+  const totalPaid  = expenses.filter(e=>isSavingExp(e)&&isCash(e)).reduce((s,e)=>s+e.amt,0);
+  const totalExpect= savings.map(calcExpect).filter(Boolean).reduce((a,b)=>a+b,0);
+
+  document.getElementById('sav-monthly').textContent    = fmt(monthly);
+  document.getElementById('sav-total-paid').textContent = fmt(totalPaid);
+  document.getElementById('sav-expect').textContent     = totalExpect ? fmt(totalExpect) : '—';
+
   const el=document.getElementById('sav-list');
   if(!savings.length){el.innerHTML='<div class="empty-state">등록된 예적금이 없어요</div>';return;}
+
   el.innerHTML=savings.map(sv=>{
-    const dd=dDay(sv.maturity),pct=progPct(sv.start,sv.maturity),exp=calcExpect(sv);
-    const c=sv.cycle||'monthly';
-    const cycleText=c==='monthly'?`매월 ${sv.payDay||1}일`:c==='weekly'?`매주 ${['일','월','화','수','목','금','토'][sv.payDay||0]}요일`:'일시납';
+    const dd=dDay(sv.maturity), pct=progPct(sv.start,sv.maturity), exp=calcExpect(sv);
+
+    // ★ 연결된 지출 집계
+    const linkedExps    = expenses.filter(e=>e.savingId===sv.id&&isCash(e)).sort((a,b)=>b.date.localeCompare(a.date));
+    const monthlyPaid   = linkedExps.filter(e=>e.date?.startsWith(ym)).reduce((s,e)=>s+e.amt,0);
+    const totalLinked   = linkedExps.reduce((s,e)=>s+e.amt,0);
+    const recentEntries = linkedExps.slice(0,3);
+
     return `<div class="sav-card">
       <div class="sav-header">
-        <div><div class="sav-name">${sv.name}</div>
-          <span class="badge ${sv.type==='예금'?'badge-blue':'badge-green'}">${sv.type}</span>
-          <span class="badge" style="margin-left:4px;background:var(--bg2);color:var(--text2)">${sv.owner}</span></div>
+        <div>
+          <div class="sav-name">${sv.name}</div>
+          <span class="badge ${sv.type==='예금'?'badge-blue':sv.type==='주식/펀드'?'badge-card':'badge-green'}">${sv.type}</span>
+          <span class="badge" style="margin-left:4px;background:var(--bg2);color:var(--text2)">${sv.owner}</span>
+        </div>
         <div style="display:flex;align-items:center;gap:6px">
           <button class="del-btn" style="font-size:16px;color:var(--text2)" onclick="openSavEditModal('${sv.id}')">✎</button>
           <button class="del-btn" onclick="delSaving('${sv.id}')">×</button>
         </div>
       </div>
+
+      <!-- 납입 현황 -->
       <div class="sav-grid">
-        <div class="sav-item"><label>1회 납입액 (${cycleText})</label><span class="teal-text">${fmt(sv.amt)}</span></div>
-        <div class="sav-item"><label>이율</label><span>${sv.rate?sv.rate+'%':'—'}</span></div>
-        <div class="sav-item"><label>시작일</label><span>${sv.start||'—'}</span></div>
-        <div class="sav-item"><label>만기일</label><span style="color:${dd.color}">${sv.maturity?sv.maturity+' '+dd.text:dd.text}</span></div>
+        <div class="sav-item"><label>이번달 납입</label><span class="teal-text">${monthlyPaid?fmt(monthlyPaid):'—'}</span></div>
+        <div class="sav-item"><label>총 납입액</label><span>${totalLinked?fmt(totalLinked):'—'}</span></div>
+        ${sv.rate?`<div class="sav-item"><label>이율</label><span>${sv.rate}%</span></div>`:''}
+        ${sv.maturity?`<div class="sav-item"><label>만기일</label><span style="color:${dd.color}">${sv.maturity} ${dd.text}</span></div>`:''}
       </div>
-      ${sv.start&&sv.maturity?`<div class="prog-bg"><div class="prog-fill" style="width:${pct}%;background:var(--teal)"></div></div>
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:8px"><span>진행률</span><span>${pct}%</span></div>`:''}
+
+      ${sv.start&&sv.maturity?`
+      <div class="prog-bg"><div class="prog-fill" style="width:${pct}%;background:var(--teal)"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:8px">
+        <span>진행률 ${pct}%</span><span>${sv.start} ~ ${sv.maturity}</span>
+      </div>`:''}
+
+      <!-- 최근 납입 내역 -->
+      ${recentEntries.length?`
+      <div style="border-top:0.5px solid var(--border);padding-top:8px;margin-top:4px">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:6px">최근 납입 내역</div>
+        ${recentEntries.map(e=>`
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:0.5px solid var(--border)">
+          <span style="color:var(--text2)">${e.date}</span>
+          <span style="font-weight:500;color:var(--teal)">${fmt(e.amt)}</span>
+        </div>`).join('')}
+        ${linkedExps.length>3?`<div style="font-size:11px;color:var(--text2);text-align:center;padding-top:6px">외 ${linkedExps.length-3}건</div>`:''}
+      </div>`:'<div style="font-size:12px;color:var(--text3);padding:8px 0;text-align:center">아직 납입 내역이 없어요</div>'}
+
       <div class="sav-footer">
         <span style="font-size:12px;color:var(--text2)">만기 수령 예상</span>
         <span style="font-size:15px;font-weight:600;color:var(--green)">${exp?fmt(exp):'—'}</span>
@@ -1453,8 +1530,9 @@ window.renderSummary = () => {
   const creditPending= exps.filter(e=>isCredit(e)).reduce((s,e)=>s+e.amt,0);
   const totalForCat  = exps.filter(e=>!isJoint(e)).reduce((s,e)=>s+e.amt,0);
   const incTotal     = incs.filter(i=>!isJointIncome(i)).reduce((s,i)=>s+i.amt,0);
-  const savMonthly   = savings.reduce((s,sv)=>s+getDeductedSavings(sv,ym),0);
-  const remain       = incTotal - cashSpent - savMonthly;
+  // ★ 저축: 연결된 지출 합산
+  const savMonthly   = exps.filter(e=>isCash(e)&&isSavingExp(e)).reduce((s,e)=>s+e.amt,0);
+  const remain       = incTotal - cashSpent;
   const realAvail    = remain - creditPending;
 
   document.getElementById('sum-spent').textContent       = fmt(cashSpent);
@@ -1464,7 +1542,7 @@ window.renderSummary = () => {
   document.getElementById('sum-real-avail').textContent  = incTotal?fmt(realAvail):'—';
   document.getElementById('sum-real-avail').style.color  = realAvail<0?'var(--red)':'var(--green)';
 
-  // ★ 저축 현황
+  // ★ 저축 현황 (연결된 지출 기반)
   const savRate = incTotal ? Math.round(savMonthly/incTotal*100) : 0;
   document.getElementById('sum-sav-amt').textContent  = fmt(savMonthly);
   document.getElementById('sum-sav-rate').textContent = incTotal ? savRate+'%' : '—';
@@ -1472,17 +1550,17 @@ window.renderSummary = () => {
   document.getElementById('sum-sav-bar-label').textContent =
     incTotal ? `수입 ${fmt(incTotal)} 중 ${fmt(savMonthly)} 저축` : '수입을 입력하면 저축률이 표시돼요';
 
-  // 예적금 항목별 납입액
+  // 저축 연결 항목별 집계
   const savDetail = savings.map(sv=>{
-    const deducted = getDeductedSavings(sv, ym);
-    if(!deducted) return '';
+    const paid = exps.filter(e=>e.savingId===sv.id&&isCash(e)).reduce((s,e)=>s+e.amt,0);
+    if(!paid) return '';
     return `<div class="sav-summary-row">
       <div style="display:flex;align-items:center;gap:8px">
         <span class="badge ${sv.type==='예금'?'badge-blue':'badge-green'}">${sv.type}</span>
         <span style="font-size:14px">${sv.name}</span>
         <span style="font-size:12px;color:var(--text2)">${sv.owner}</span>
       </div>
-      <span style="font-size:14px;font-weight:600;color:var(--teal)">${fmt(deducted)}</span>
+      <span style="font-size:14px;font-weight:600;color:var(--teal)">${fmt(paid)}</span>
     </div>`;
   }).filter(Boolean).join('');
   document.getElementById('sum-sav-detail').innerHTML =
@@ -1553,6 +1631,7 @@ onSnapshot(query(collection(db,'incomes'),orderBy('createdAt','desc')),snap=>{
 });
 onSnapshot(query(collection(db,'savings'),orderBy('createdAt','desc')),snap=>{
   savings=snap.docs.map(d=>({id:d.id,...d.data()}));
+  updateSavingLinkSelects(); // ★ 저축 연결 드롭다운 갱신
   renderSavings(); renderExpenses();
   if(document.getElementById('page-summary').classList.contains('on')) renderSummary();
   if(!_sl){_sl=true;tryShow();}
