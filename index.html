@@ -229,9 +229,17 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
 
 <!-- 수입 -->
 <div class="page" id="page-income">
-  <div class="page-header"><span class="page-title">수입</span><button class="header-btn" onclick="openModal('modal-income')">+ 추가</button></div>
+  <div class="page-header">
+    <span class="page-title">수입</span>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="sel-wrap" style="width:110px">
+        <select id="income-month" style="font-size:13px;padding:6px 10px"></select>
+      </div>
+      <button class="header-btn" onclick="openModal('modal-income')">+ 추가</button>
+    </div>
+  </div>
   <div class="summary-stats">
-    <div class="stat-card"><div class="stat-label">이번 달 총 수입</div><div class="stat-val blue-text" id="income-total">0원</div></div>
+    <div class="stat-card"><div class="stat-label" id="income-total-label">이번 달 총 수입</div><div class="stat-val blue-text" id="income-total">0원</div></div>
     <div class="stat-card"><div class="stat-label">급여 외 수입</div><div class="stat-val green-text" id="income-extra">0원</div></div>
   </div>
   <div class="section-label">이설</div>
@@ -1302,28 +1310,52 @@ window.updateIncome = async () => {
   closeModal('modal-income-edit');
 };
 
+// ── 수입 월 셀렉트 초기화 (옵션만 구성, 값 유지) ──
+function buildIncomeMthSelect() {
+  const sel = document.getElementById('income-month');
+  if(!sel) return;
+  const allMths = [...new Set([
+    ...incomes.map(i=>i.date?.slice(0,7)),
+    nowYM()
+  ].filter(Boolean))].sort().reverse();
+  const prev = sel.value;
+  sel.innerHTML = allMths.map(m=>`<option value="${m}">${m}</option>`).join('');
+  sel.value = allMths.includes(prev) ? prev : allMths[0] || nowYM();
+}
+
+// ── 수입 목록 렌더링 ──
 function renderIncomes() {
-  const ym=nowYM(), list=incomes.filter(i=>i.date?.startsWith(ym));
-  document.getElementById('income-total').textContent=fmt(list.filter(i=>!isJointIncome(i)).reduce((s,i)=>s+i.amt,0));
-  document.getElementById('income-extra').textContent=fmt(list.filter(i=>i.type!=='급여'&&!isJointIncome(i)).reduce((s,i)=>s+i.amt,0));
+  buildIncomeMthSelect();
+  const sel = document.getElementById('income-month');
+  const ym  = sel ? sel.value : nowYM();
+  const list = incomes.filter(i=>i.date?.startsWith(ym));
+
+  document.getElementById('income-total-label').textContent = ym===nowYM() ? '이번 달 총 수입' : `${ym} 총 수입`;
+  document.getElementById('income-total').textContent = fmt(list.filter(i=>!isJointIncome(i)).reduce((s,i)=>s+i.amt,0));
+  document.getElementById('income-extra').textContent = fmt(list.filter(i=>i.type!=='급여'&&!isJointIncome(i)).reduce((s,i)=>s+i.amt,0));
+
   ['이설','상훈'].forEach(p=>{
-    const pList=list.filter(i=>i.person===p||i.person==='공동').sort((a,b)=>(b.date||'').localeCompare(a.date||'')||b.createdAt-a.createdAt);
-    const el=document.getElementById('income-list-'+p);
-    if(!pList.length){el.innerHTML='<div class="empty-state" style="padding:16px 0">내역이 없어요</div>';return;}
-    el.innerHTML=pList.map(i=>`
+    const pList = list.filter(i=>i.person===p||i.person==='공동')
+      .sort((a,b)=>(b.date||'').localeCompare(a.date||'')||b.createdAt-a.createdAt);
+    const el = document.getElementById('income-list-'+p);
+    if(!pList.length){ el.innerHTML='<div class="empty-state" style="padding:16px 0">내역이 없어요</div>'; return; }
+    el.innerHTML = pList.map(i=>`
       <div class="list-item">
         <div class="item-left"><div class="item-info">
           <div class="item-name">${i.name}</div>
           <div class="item-sub">${i.date} · ${i.type} · ${i.person}${i.memo?' · '+i.memo:''}</div>
         </div></div>
         <div class="item-right">
-          <span class="item-amt ${isJointIncome(i)?'amber-text':i.amt>0?'green-text':'red-text'}">${isJointIncome(i)?'':i.amt>0?'+ ':'- '}${fmt(i.amt)}</span>
+          <span class="item-amt ${isJointIncome(i)?'amber-text':'green-text'}">${isJointIncome(i)?'':'+ '}${fmt(i.amt)}</span>
           <button class="del-btn" style="font-size:16px;color:var(--text2)" onclick="openIncEditModal('${i.id}')">✎</button>
           <button class="del-btn" onclick="delIncome('${i.id}')">×</button>
         </div>
       </div>`).join('');
   });
 }
+
+// 월 셀렉트 변경 이벤트
+document.getElementById('income-month').addEventListener('change', renderIncomes);
 
 // ── 카드 ──
 async function loadCards() {
