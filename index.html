@@ -925,6 +925,30 @@ window.addExp = async () => {
   closeModal('modal-exp');
 };
 window.delExp = async id => { if(confirm('삭제할까요?')) await deleteDoc(doc(db,'expenses',id)); };
+
+// ★ 복제: 내용을 추가 모달에 채워서 열기 (날짜는 오늘로)
+window.copyExp = id => {
+  const e = expenses.find(e=>e.id===id); if(!e) return;
+  document.getElementById('exp-name').value   = e.name;
+  document.getElementById('exp-amt').value    = parseInt(e.amt).toLocaleString('ko-KR');
+  document.getElementById('exp-date').value   = toDate(); // 날짜는 오늘
+  document.getElementById('exp-cat').value    = e.cat||'기타';
+  document.getElementById('exp-card').value   = e.card||'현금';
+  document.getElementById('exp-person').value = e.person||'이설';
+  document.getElementById('exp-memo').value   = e.memo||'';
+  // 저축 연결
+  const wrap = document.getElementById('exp-saving-link-wrap');
+  if(e.savingId) {
+    document.getElementById('exp-saving-link').value = e.savingId;
+    wrap.style.display = 'block';
+  } else {
+    document.getElementById('exp-saving-link').value = '';
+    wrap.style.display = e.cat==='저축/투자' ? 'block' : 'none';
+  }
+  // 카드 힌트
+  document.getElementById('exp-card-hint').style.display = isCredit({card:e.card}) ? 'block' : 'none';
+  openModal('modal-exp');
+};
 window.openEditModal = id => {
   const e=expenses.find(e=>e.id===id); if(!e) return;
   ['id','name','date','cat','card','person','memo'].forEach(k=>{
@@ -1139,6 +1163,9 @@ function renderExpenses() {
     const periodJointIn =incomes.filter(i=>inRange(i)&&isJointIncome(i)).reduce((s,i)=>s+i.amt,0);
     const periodJointOut=expenses.filter(e=>inRange(e)&&isJoint(e)).reduce((s,e)=>s+e.amt,0);
 
+    // ★ savByP 정의 (period 블록에서 누락되어 있던 것)
+    const savByP = sv => p==='all' ? (sv.owner==='이설'||sv.owner==='상훈') : sv.owner===p;
+
     const months=[...new Set([
       ...incomes.filter(i=>inRange(i)).map(i=>i.date?.slice(0,7)),
       ...expenses.filter(e=>inRange(e)).map(e=>e.date?.slice(0,7))
@@ -1241,6 +1268,7 @@ function renderExpList() {
               <span class="item-amt" style="color:${isCredit(e)?'var(--purple)':'var(--red)'}">
                 ${isCredit(e)?'[카드] ':'-'}${fmt(e.amt)}
               </span>
+              <button class="del-btn" style="font-size:15px;color:var(--text2)" onclick="copyExp('${e.id}')" title="복제">⎘</button>
               <button class="del-btn" style="font-size:16px;color:var(--text2)" onclick="openEditModal('${e.id}')">✎</button>
               <button class="del-btn" onclick="delExp('${e.id}')">×</button>
             </div>
