@@ -732,7 +732,11 @@ function renderCatList() {
           style="position:absolute;opacity:0;width:0;height:0;pointer-events:none"
           id="cat-color-${i}" onchange="updateCatColor(${i},this.value)">
       </label>
-      <span style="flex:1;font-size:14px;font-weight:500;margin-left:4px">${c.name}</span>
+      <span id="cat-name-${i}" style="flex:1;font-size:14px;font-weight:500;margin-left:4px">${c.name}</span>
+      <input id="cat-name-input-${i}" type="text" value="${c.name}"
+        style="display:none;flex:1;font-size:14px;margin-left:4px;padding:2px 6px;border:1px solid var(--border2);border-radius:6px;background:var(--bg2);color:var(--text1)"
+        onkeydown="if(event.key==='Enter')saveCatName(${i});if(event.key==='Escape')cancelCatEdit(${i})">
+      <button class="del-btn" style="font-size:15px;color:var(--text2);margin-right:2px" onclick="startCatEdit(${i})" title="이름 수정">✎</button>
       <button class="del-btn" onclick="deleteCategory(${i})" style="font-size:18px">×</button>
     </div>`).join('');
 
@@ -813,10 +817,42 @@ function renderCatList() {
 
 window.updateCatColor = async (idx, color) => {
   categories[idx].color = color;
-  // 스와치 즉시 반영 (저장 전에도 보이도록)
   const swatch = document.getElementById('swatch-'+idx);
   if(swatch) swatch.style.background = color;
   await saveCategories();
+};
+
+// ── 카테고리명 수정 ──
+window.startCatEdit = idx => {
+  document.getElementById('cat-name-'+idx).style.display       = 'none';
+  document.getElementById('cat-name-input-'+idx).style.display = 'flex';
+  document.getElementById('cat-name-input-'+idx).focus();
+  document.getElementById('cat-name-input-'+idx).select();
+};
+window.cancelCatEdit = idx => {
+  document.getElementById('cat-name-input-'+idx).style.display = 'none';
+  document.getElementById('cat-name-'+idx).style.display       = '';
+};
+window.saveCatName = async idx => {
+  const newName = document.getElementById('cat-name-input-'+idx).value.trim();
+  const oldName = categories[idx].name;
+  if(!newName){ alert('이름을 입력해 주세요'); return; }
+  if(newName === oldName){ cancelCatEdit(idx); return; }
+  if(categories.find((c,i)=>c.name===newName&&i!==idx)){ alert('이미 존재하는 카테고리예요'); return; }
+
+  // ★ 기존 지출 데이터 일괄 업데이트
+  const targets = expenses.filter(e=>e.cat===oldName);
+  if(targets.length > 0) {
+    const ok = confirm(`'${oldName}' → '${newName}' 변경 시\n기존 지출 ${targets.length}건의 카테고리도 함께 변경돼요.\n계속할까요?`);
+    if(!ok) return;
+    // Firestore 일괄 업데이트
+    await Promise.all(targets.map(e=>updateDoc(doc(db,'expenses',e.id),{cat:newName})));
+  }
+
+  categories[idx].name = newName;
+  await saveCategories();
+  // 로컬 데이터도 즉시 반영
+  expenses.forEach(e=>{ if(e.cat===oldName) e.cat=newName; });
 };
 
 window.addCategory = async () => {
