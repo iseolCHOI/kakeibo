@@ -1573,11 +1573,23 @@ function progPct(s,m) {
 }
 function renderSavings() {
   const ym=nowYM();
-  // ★ 이번달 납입액: 저축 연결된 지출 합산
-  const monthly    = expenses.filter(e=>e.date?.startsWith(ym)&&isSavingExp(e)&&isCash(e)).reduce((s,e)=>s+e.amt,0);
-  // ★ 총 납입액: 전체 기간 저축 연결 지출 합산
-  const totalPaid  = expenses.filter(e=>isSavingExp(e)&&isCash(e)).reduce((s,e)=>s+e.amt,0);
-  const totalExpect= savings.map(calcExpect).filter(Boolean).reduce((a,b)=>a+b,0);
+  // ★ 이번달 납입액: 저축 연결된 지출 합산 (수동 입력 기준)
+  const monthly = expenses.filter(e=>e.date?.startsWith(ym)&&isSavingExp(e)&&isCash(e)).reduce((s,e)=>s+e.amt,0);
+
+  // ★ 총 납입액: 적금 계획 기준 자동계산 (start ~ 현재까지 누적)
+  const allMonths = [];
+  const startDate = savings.reduce((min,sv)=>sv.start&&sv.start<min?sv.start:min, nowYM()+'-01');
+  let cur = new Date(startDate.slice(0,7)+'-01');
+  const nowDate = new Date();
+  while(cur <= nowDate) {
+    allMonths.push(`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}`);
+    cur.setMonth(cur.getMonth()+1);
+  }
+  const totalPaid = savings.reduce((total,sv)=>
+    total + allMonths.reduce((s,m)=>s+getDeductedSavings(sv,m),0)
+  , 0);
+
+  const totalExpect = savings.map(calcExpect).filter(Boolean).reduce((a,b)=>a+b,0);
 
   document.getElementById('sav-monthly').textContent    = fmt(monthly);
   document.getElementById('sav-total-paid').textContent = fmt(totalPaid);
@@ -1589,10 +1601,11 @@ function renderSavings() {
   el.innerHTML=savings.map(sv=>{
     const dd=dDay(sv.maturity), pct=progPct(sv.start,sv.maturity), exp=calcExpect(sv);
 
-    // ★ 연결된 지출 집계
-    const linkedExps    = expenses.filter(e=>e.savingId===sv.id&&isCash(e)).sort((a,b)=>b.date.localeCompare(a.date));
-    const monthlyPaid   = linkedExps.filter(e=>e.date?.startsWith(ym)).reduce((s,e)=>s+e.amt,0);
-    const totalLinked   = linkedExps.reduce((s,e)=>s+e.amt,0);
+    // 이번달 납입: 연결된 수동 입력 기준
+    const linkedExps  = expenses.filter(e=>e.savingId===sv.id&&isCash(e)).sort((a,b)=>b.date.localeCompare(a.date));
+    const monthlyPaid = linkedExps.filter(e=>e.date?.startsWith(ym)).reduce((s,e)=>s+e.amt,0);
+    // ★ 총 납입액: 이 적금의 start ~ 현재까지 자동계산
+    const svTotalPaid = allMonths.reduce((s,m)=>s+getDeductedSavings(sv,m),0);
     const recentEntries = linkedExps.slice(0,3);
 
     return `<div class="sav-card">
@@ -1611,7 +1624,7 @@ function renderSavings() {
       <!-- 납입 현황 -->
       <div class="sav-grid">
         <div class="sav-item"><label>이번달 납입</label><span class="teal-text">${monthlyPaid?fmt(monthlyPaid):'—'}</span></div>
-        <div class="sav-item"><label>총 납입액</label><span>${totalLinked?fmt(totalLinked):'—'}</span></div>
+        <div class="sav-item"><label>총 납입액</label><span>${svTotalPaid?fmt(svTotalPaid):'—'}</span></div>
         ${sv.rate?`<div class="sav-item"><label>이율</label><span>${sv.rate}%</span></div>`:''}
         ${sv.maturity?`<div class="sav-item"><label>만기일</label><span style="color:${dd.color}">${sv.maturity} ${dd.text}</span></div>`:''}
       </div>
