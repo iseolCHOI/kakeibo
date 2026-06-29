@@ -544,6 +544,22 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
       <div class="sel-wrap"><select id="edit-sav-owner"><option>이설</option><option>상훈</option><option>공동</option></select></div>
       <input type="text" id="edit-sav-memo" placeholder="메모 (선택)">
       <button class="submit-btn" onclick="updateSaving()">수정 완료</button>
+
+      <!-- ★ 상태 변경 -->
+      <div id="edit-sav-status-wrap" style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:10px">상태 변경</div>
+        <div style="display:flex;gap:8px">
+          <button id="btn-sav-mature" class="submit-btn"
+            style="flex:1;background:var(--teal);font-size:14px"
+            onclick="matureSavingFromEdit()">✅ 만기 완료</button>
+          <button id="btn-sav-close" class="submit-btn"
+            style="flex:1;background:var(--red);font-size:14px"
+            onclick="openCloseSavingFromEdit()">❌ 중도 해지</button>
+        </div>
+        <div id="edit-sav-status-badge" style="display:none;margin-top:10px;text-align:center;font-size:13px;color:var(--text2)"></div>
+        <button id="btn-sav-reactivate" style="display:none;width:100%;margin-top:8px;padding:8px;border-radius:8px;background:var(--bg2);color:var(--text2);font-size:13px;border:1px solid var(--border2)"
+          onclick="reactivateSaving()">↩ 납입 중으로 되돌리기</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1529,18 +1545,33 @@ window.addSaving = async () => {
 };
 window.openSavEditModal = id => {
   const sv=savings.find(s=>s.id===id); if(!sv) return;
-  document.getElementById('edit-sav-id').value      =id;
-  document.getElementById('edit-sav-name').value    =sv.name;
-  document.getElementById('edit-sav-type').value    =sv.type;
-  document.getElementById('edit-sav-cycle').value   =sv.cycle||'monthly';
+  document.getElementById('edit-sav-id').value      = id;
+  document.getElementById('edit-sav-name').value    = sv.name;
+  document.getElementById('edit-sav-type').value    = sv.type;
+  document.getElementById('edit-sav-cycle').value   = sv.cycle||'monthly';
   changeEditSavCycle();
-  if(sv.cycle!=='once') document.getElementById('edit-sav-payday').value=sv.payDay||(sv.cycle==='weekly'?0:1);
+  if(sv.cycle!=='once') document.getElementById('edit-sav-payday').value = sv.payDay||(sv.cycle==='weekly'?0:1);
   document.getElementById('edit-sav-amt').value     = sv.amt ? parseInt(sv.amt).toLocaleString('ko-KR') : '';
-  document.getElementById('edit-sav-rate').value    =sv.rate||'';
-  document.getElementById('edit-sav-start').value   =sv.start||'';
-  document.getElementById('edit-sav-maturity').value=sv.maturity||'';
-  document.getElementById('edit-sav-owner').value   =sv.owner;
-  document.getElementById('edit-sav-memo').value    =sv.memo||'';
+  document.getElementById('edit-sav-rate').value    = sv.rate||'';
+  document.getElementById('edit-sav-start').value   = sv.start||'';
+  document.getElementById('edit-sav-maturity').value= sv.maturity||'';
+  document.getElementById('edit-sav-owner').value   = sv.owner||'이설';
+  document.getElementById('edit-sav-memo').value    = sv.memo||'';
+  // ★ 현재 상태 표시
+  const badge = document.getElementById('edit-sav-status-badge');
+  const btnM  = document.getElementById('btn-sav-mature');
+  const btnC  = document.getElementById('btn-sav-close');
+  const btnR  = document.getElementById('btn-sav-reactivate');
+  if(sv.status==='matured') {
+    badge.style.display='block'; badge.innerHTML='✅ 현재 만기 완료 상태예요';
+    btnM.style.display='none'; btnC.style.display='none'; btnR.style.display='block';
+  } else if(sv.status==='closed') {
+    badge.style.display='block'; badge.innerHTML=`❌ 현재 중도 해지 상태예요 (해지일: ${sv.closedAt||''})`;
+    btnM.style.display='none'; btnC.style.display='none'; btnR.style.display='block';
+  } else {
+    badge.style.display='none'; btnR.style.display='none';
+    btnM.style.display=''; btnC.style.display='';
+  }
   openModal('modal-sav-edit');
 };
 window.updateSaving = async () => {
@@ -1561,15 +1592,24 @@ window.updateSaving = async () => {
 };
 window.delSaving = async id => { if(confirm('삭제할까요?')) await deleteDoc(doc(db,'savings',id)); };
 
-// ── 만기 처리 ──
-window.matureSaving = async id => {
+// ── 만기 처리 (수정 모달에서) ──
+window.matureSavingFromEdit = async () => {
+  const id = document.getElementById('edit-sav-id').value;
   if(!confirm('만기 완료 처리할까요?\n이후 납입 계산이 중단돼요.')) return;
   await updateDoc(doc(db,'savings',id), { status:'matured' });
+  closeModal('modal-sav-edit');
 };
 
-// ── 중도 해지 ──
+// ── 중도 해지 (수정 모달 → 해지 모달) ──
+window.openCloseSavingFromEdit = () => {
+  const id = document.getElementById('edit-sav-id').value;
+  document.getElementById('close-sav-id').value   = id;
+  document.getElementById('close-sav-date').value = toDate();
+  closeModal('modal-sav-edit');
+  openModal('modal-sav-close');
+};
 window.openCloseSaving = id => {
-  document.getElementById('close-sav-id').value  = id;
+  document.getElementById('close-sav-id').value   = id;
   document.getElementById('close-sav-date').value = toDate();
   openModal('modal-sav-close');
 };
@@ -1579,6 +1619,20 @@ window.confirmCloseSaving = async () => {
   if(!closedAt){ alert('해지일을 입력해 주세요'); return; }
   await updateDoc(doc(db,'savings',id), { status:'closed', closedAt });
   closeModal('modal-sav-close');
+};
+
+// ── 납입 중으로 되돌리기 ──
+window.reactivateSaving = async () => {
+  const id = document.getElementById('edit-sav-id').value;
+  if(!confirm('납입 중 상태로 되돌릴까요?')) return;
+  await updateDoc(doc(db,'savings',id), { status:'', closedAt:'' });
+  closeModal('modal-sav-edit');
+};
+
+// ── 만기 처리 (직접 호출용, 하위 호환) ──
+window.matureSaving = async id => {
+  if(!confirm('만기 완료 처리할까요?')) return;
+  await updateDoc(doc(db,'savings',id), { status:'matured' });
 };
 
 function calcExpect(sv) {
@@ -1630,50 +1684,40 @@ function renderSavings() {
   const el=document.getElementById('sav-list');
   if(!savings.length){el.innerHTML='<div class="empty-state">등록된 예적금이 없어요</div>';return;}
 
-  el.innerHTML=savings.map(sv=>{
-    const dd=dDay(sv.maturity), pct=progPct(sv.start,sv.maturity), exp=calcExpect(sv);
+  const active   = savings.filter(sv=>!sv.status);
+  const matured  = savings.filter(sv=>sv.status==='matured');
+  const closed   = savings.filter(sv=>sv.status==='closed');
 
-    // 이번달 납입: 연결된 수동 입력 기준
+  const renderCard = sv => {
+    const dd=dDay(sv.maturity), pct=progPct(sv.start,sv.maturity), exp=calcExpect(sv);
     const linkedExps  = expenses.filter(e=>e.savingId===sv.id&&isCash(e)).sort((a,b)=>b.date.localeCompare(a.date));
     const monthlyPaid = linkedExps.filter(e=>e.date?.startsWith(ym)).reduce((s,e)=>s+e.amt,0);
-    // ★ 총 납입액: 이 적금의 start ~ 현재까지 자동계산
     const svTotalPaid = allMonths.reduce((s,m)=>s+getDeductedSavings(sv,m),0);
     const recentEntries = linkedExps.slice(0,3);
-
     return `<div class="sav-card">
       <div class="sav-header">
         <div>
           <div class="sav-name">${sv.name}</div>
           <span class="badge ${sv.type==='예금'?'badge-blue':sv.type==='주식/펀드'?'badge-card':'badge-green'}">${sv.type}</span>
           <span class="badge" style="margin-left:4px;background:var(--bg2);color:var(--text2)">${sv.owner}</span>
-          ${sv.status==='matured' ? `<span class="badge" style="margin-left:4px;background:#e1f5ee;color:var(--teal)">✅ 만기 완료</span>` : ''}
-          ${sv.status==='closed'  ? `<span class="badge" style="margin-left:4px;background:#fdecea;color:var(--red)">❌ 중도 해지 (${sv.closedAt||''})</span>` : ''}
         </div>
         <div style="display:flex;align-items:center;gap:6px">
-          ${!sv.status ? `
-            <button class="del-btn" style="font-size:11px;padding:3px 8px;border-radius:6px;background:var(--bg2);color:var(--teal);white-space:nowrap" onclick="matureSaving('${sv.id}')">만기</button>
-            <button class="del-btn" style="font-size:11px;padding:3px 8px;border-radius:6px;background:var(--bg2);color:var(--red);white-space:nowrap" onclick="openCloseSaving('${sv.id}')">해지</button>
-          ` : ''}
           <button class="del-btn" style="font-size:16px;color:var(--text2)" onclick="openSavEditModal('${sv.id}')">✎</button>
           <button class="del-btn" onclick="delSaving('${sv.id}')">×</button>
         </div>
       </div>
-
-      <!-- 납입 현황 -->
       <div class="sav-grid">
         <div class="sav-item"><label>이번달 납입</label><span class="teal-text">${monthlyPaid?fmt(monthlyPaid):'—'}</span></div>
         <div class="sav-item"><label>총 납입액</label><span>${svTotalPaid?fmt(svTotalPaid):'—'}</span></div>
         ${sv.rate?`<div class="sav-item"><label>이율</label><span>${sv.rate}%</span></div>`:''}
         ${sv.maturity?`<div class="sav-item"><label>만기일</label><span style="color:${dd.color}">${sv.maturity} ${dd.text}</span></div>`:''}
+        ${sv.closedAt?`<div class="sav-item"><label>해지일</label><span style="color:var(--red)">${sv.closedAt}</span></div>`:''}
       </div>
-
       ${sv.start&&sv.maturity?`
       <div class="prog-bg"><div class="prog-fill" style="width:${pct}%;background:var(--teal)"></div></div>
       <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:8px">
         <span>진행률 ${pct}%</span><span>${sv.start} ~ ${sv.maturity}</span>
       </div>`:''}
-
-      <!-- 최근 납입 내역 -->
       ${recentEntries.length?`
       <div style="border-top:0.5px solid var(--border);padding-top:8px;margin-top:4px">
         <div style="font-size:11px;color:var(--text2);margin-bottom:6px">최근 납입 내역</div>
@@ -1684,13 +1728,21 @@ function renderSavings() {
         </div>`).join('')}
         ${linkedExps.length>3?`<div style="font-size:11px;color:var(--text2);text-align:center;padding-top:6px">외 ${linkedExps.length-3}건</div>`:''}
       </div>`:'<div style="font-size:12px;color:var(--text3);padding:8px 0;text-align:center">아직 납입 내역이 없어요</div>'}
-
       <div class="sav-footer">
         <span style="font-size:12px;color:var(--text2)">만기 수령 예상</span>
         <span style="font-size:15px;font-weight:600;color:var(--green)">${exp?fmt(exp):'—'}</span>
       </div>
     </div>`;
-  }).join('');
+  };
+
+  const section = (title, color, list) => list.length ? `
+    <div style="font-size:12px;font-weight:600;color:${color};margin:16px 0 8px;padding-left:4px">${title} ${list.length}건</div>
+    ${list.map(renderCard).join('')}` : '';
+
+  el.innerHTML =
+    section('📌 납입 중', 'var(--teal)', active) +
+    section('✅ 만기 완료', '#1a7a50', matured) +
+    section('❌ 중도 해지', 'var(--red)', closed);
 }
 
 // ── 요약 ──
