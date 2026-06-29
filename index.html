@@ -506,6 +506,18 @@ input:focus,select:focus{border-color:var(--blue);background:var(--bg)}
   </div>
 </div>
 
+<!-- 중도 해지 모달 -->
+<div class="modal-backdrop" id="modal-sav-close" onclick="closeModalOutside(event,'modal-sav-close')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">적금 중도 해지</div>
+    <input type="hidden" id="close-sav-id">
+    <p style="font-size:14px;color:var(--text2);margin-bottom:12px">해지일을 입력해 주세요.<br>해지일 이후 납입분은 계산에서 제외돼요.</p>
+    <input type="date" id="close-sav-date">
+    <button class="submit-btn" style="background:var(--red);margin-top:12px" onclick="confirmCloseSaving()">해지 처리</button>
+  </div>
+</div>
+
 <!-- 예적금 수정 모달 -->
 <div class="modal-backdrop" id="modal-sav-edit" onclick="closeModalOutside(event,'modal-sav-edit')">
   <div class="modal">
@@ -877,8 +889,11 @@ function getDeductedSavings(sv, ym) {
   const y=parseInt(ym.slice(0,4)), m=parseInt(ym.slice(5,7));
   const cycle=sv.cycle||'monthly', payDay=sv.payDay||1;
 
-  if(sv.start    && sv.start.slice(0,7)    > ym) return 0;
-  if(sv.maturity && sv.maturity.slice(0,7) < ym) return 0;
+  // ★ 유효 종료일: 만기일 vs 해지일 중 이른 날짜 사용
+  const effectiveEnd = [sv.maturity, sv.closedAt].filter(Boolean).sort()[0] || null;
+
+  if(sv.start      && sv.start.slice(0,7)     > ym) return 0;
+  if(effectiveEnd  && effectiveEnd.slice(0,7) < ym) return 0;
 
   if(cycle==='once'||sv.type==='예금') return sv.start?.slice(0,7)===ym ? sv.amt : 0;
 
@@ -894,14 +909,11 @@ function getDeductedSavings(sv, ym) {
     const daysInMonth=new Date(y,m,0).getDate();
     for(let d=1; d<=daysInMonth; d++) {
       if(new Date(y,m-1,d).getDay()!==wDay) continue;
-      // 미래 달 스킵
       if(y>curY||(y===curY&&m>curM)) continue;
-      // 현재 달: 오늘 이후 날짜는 아직 납부 안 함
       if(y===curY&&m===curM&&d>curD) continue;
-      // 적금 기간 체크
       const ds=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      if(sv.start    && ds<sv.start)    continue;
-      if(sv.maturity && ds>sv.maturity) continue;
+      if(sv.start      && ds<sv.start)      continue;
+      if(effectiveEnd  && ds>effectiveEnd)  continue;
       count++;
     }
     return sv.amt*count;
@@ -1549,6 +1561,26 @@ window.updateSaving = async () => {
 };
 window.delSaving = async id => { if(confirm('삭제할까요?')) await deleteDoc(doc(db,'savings',id)); };
 
+// ── 만기 처리 ──
+window.matureSaving = async id => {
+  if(!confirm('만기 완료 처리할까요?\n이후 납입 계산이 중단돼요.')) return;
+  await updateDoc(doc(db,'savings',id), { status:'matured' });
+};
+
+// ── 중도 해지 ──
+window.openCloseSaving = id => {
+  document.getElementById('close-sav-id').value  = id;
+  document.getElementById('close-sav-date').value = toDate();
+  openModal('modal-sav-close');
+};
+window.confirmCloseSaving = async () => {
+  const id       = document.getElementById('close-sav-id').value;
+  const closedAt = document.getElementById('close-sav-date').value;
+  if(!closedAt){ alert('해지일을 입력해 주세요'); return; }
+  await updateDoc(doc(db,'savings',id), { status:'closed', closedAt });
+  closeModal('modal-sav-close');
+};
+
 function calcExpect(sv) {
   if(!sv.maturity||!sv.start||!sv.rate) return null;
   const days=(new Date(sv.maturity)-new Date(sv.start))/(1000*60*60*24);
@@ -1614,8 +1646,14 @@ function renderSavings() {
           <div class="sav-name">${sv.name}</div>
           <span class="badge ${sv.type==='예금'?'badge-blue':sv.type==='주식/펀드'?'badge-card':'badge-green'}">${sv.type}</span>
           <span class="badge" style="margin-left:4px;background:var(--bg2);color:var(--text2)">${sv.owner}</span>
+          ${sv.status==='matured' ? `<span class="badge" style="margin-left:4px;background:#e1f5ee;color:var(--teal)">✅ 만기 완료</span>` : ''}
+          ${sv.status==='closed'  ? `<span class="badge" style="margin-left:4px;background:#fdecea;color:var(--red)">❌ 중도 해지 (${sv.closedAt||''})</span>` : ''}
         </div>
         <div style="display:flex;align-items:center;gap:6px">
+          ${!sv.status ? `
+            <button class="del-btn" style="font-size:11px;padding:3px 8px;border-radius:6px;background:var(--bg2);color:var(--teal);white-space:nowrap" onclick="matureSaving('${sv.id}')">만기</button>
+            <button class="del-btn" style="font-size:11px;padding:3px 8px;border-radius:6px;background:var(--bg2);color:var(--red);white-space:nowrap" onclick="openCloseSaving('${sv.id}')">해지</button>
+          ` : ''}
           <button class="del-btn" style="font-size:16px;color:var(--text2)" onclick="openSavEditModal('${sv.id}')">✎</button>
           <button class="del-btn" onclick="delSaving('${sv.id}')">×</button>
         </div>
